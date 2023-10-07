@@ -25,18 +25,17 @@ namespace DADTKV.initializer
         private int timeSlot = 0;
         private List<int> roundsDown = new List<int>();
         private string tmUrls;
-        private string lmUrls;
         private string tmIds;
         public ProcessStartInfo startInfo;
 
-        public DADLeaseManagerProc(string projectPath, string id, string url,string tmIds, string tmUrls, string lmUrls)
+        public DADLeaseManagerProc(string projectPath, string id, string url,string tmIds, string tmUrls, string peers)
         {
             this.projectPath = projectPath;
             this.id = id;
             this.url = url;
             this.tmIds = tmIds;
             this.tmUrls = tmUrls;
-            this.lmUrls = lmUrls;
+            this.peers = peers;
             startInfo = new ProcessStartInfo();
         }
 
@@ -80,11 +79,6 @@ namespace DADTKV.initializer
             return tmUrls;
         }
 
-        private string GetLmsUrlsString()
-        {
-            return lmUrls;
-        }
-
         private string GetProcessArgs()
         {
             return $"--id {id}" +
@@ -95,7 +89,6 @@ namespace DADTKV.initializer
                 $"--roundsDown {GetRoundsDownString()}" +
                 $"--tmIds {GetTmsIdsString()}" +
                 $"--tmUrls {GetTmsUrlsString()}" +
-                $"--lmUrls {GetLmsUrlsString()}" +
                 "";
         }
 

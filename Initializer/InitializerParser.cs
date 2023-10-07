@@ -34,7 +34,7 @@ namespace DADTKV.initializer
 
         public static string GetLeasersList(List<string> lines)
         {
-            string leaderList = "";
+            string leaserList = "";
             foreach (string line in lines)
             {
                 string[] components = line.Split(' ');
@@ -45,11 +45,11 @@ namespace DADTKV.initializer
                     string processType = components[2];
                     string processArg = components[3];
                     if (processType == "L")
-                        leaderList += processId + " " + processArg + " ";
+                        leaserList += processId + " " + processArg + " ";
                 }
             }
 
-            return leaderList;
+            return leaserList;
         }
 
         public static string getLeaseManAddresses(List<string> lines)
