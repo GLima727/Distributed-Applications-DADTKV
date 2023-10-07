@@ -1,1 +1,1 @@
-P TM1 T http://localhost:10000
+P LM1 L http://localhost:10000

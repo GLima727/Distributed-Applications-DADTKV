@@ -23,6 +23,10 @@ namespace DADTKV.initializer
             string projectPath = InitializerParser.GetCurrrentPath();
             List<string> file_lines = new List<string>(File.ReadAllLines(filePath));
             string LleaderList = InitializerParser.GetLeasersList(file_lines);
+            string tmIDs = InitializerParser.getTransManIds(file_lines);
+            string tmAdresses = InitializerParser.getTransManAddresses(file_lines);
+            string lmAdresses = InitializerParser.getLeaseManAddresses(file_lines);
+
             //-------------------------------------------------------------------------//
 
 
@@ -44,13 +48,13 @@ namespace DADTKV.initializer
                         switch (processType)
                         {
                             case "T":
-                                // processes.Add(new DADTransmissionManagerProc(projectPath, processId,processArg));
+                                processes.Add(new DADTransactionManagerProc(projectPath, processId,processArg, tmIDs, tmAdresses, lmAdresses));
                                 break;
                             case "L":
-                                processes.Add(new DADLeaseManagerProc(projectPath, processId, processArg));
+                                processes.Add(new DADLeaseManagerProc(projectPath, processId, processArg, tmIDs, tmAdresses, lmAdresses));
                                 break;
                             case "C":
-                                // processes.Add(new DADClientProc(projectPath, processId,processArg));
+                                processes.Add(new DADClientProc(projectPath, processId,processArg, tmIDs, tmAdresses));
                                 break;
                         }
                         break;
