@@ -1,0 +1,14 @@
+syntax = "proto3";
+//Service where Transaction Managers talk between themselves
+
+message PropagateLeasesRequest {
+	repeated string leases = 1;
+}
+
+message PropagateLeasesReply {
+	repeated string leases = 1;
+}
+
+service CrossServerTransactionManagerService {
+	rpc PropagateLeases (PropagateLeasesRequest) returns (PropagateLeasesReply);
+}

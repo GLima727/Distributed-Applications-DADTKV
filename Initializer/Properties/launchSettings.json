@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Initializer": {
+      "commandName": "Project",
+      "commandLineArgs": "../../../input.txt"
+    }
+  }
+}
