@@ -4,9 +4,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TransactionManager
+namespace DADTKV.transactionManager
 {
-    internal class TransactionManager
+    public class TransactionManager
     {
+        private string _id = "";
+        public string Id {
+            get {
+                return _id;
+            }
+            set {
+                _id = value;
+            }
+        }
+
+        public TransactionManager() {
+
+        }
     }
 }
