@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 namespace DADTKV.initializer
 {
@@ -22,6 +23,10 @@ namespace DADTKV.initializer
             // VARIABLES //
             string projectPath = InitializerParser.GetCurrrentPath();
             List<string> file_lines = new List<string>(File.ReadAllLines(filePath));
+
+            string timeStart = "";
+            int numSlots = 0;
+            int timeSlots = 0;
 
             var LMlist = new List<Tuple<string, string>>();
             var TMlist = new List<Tuple<string, string>>();
@@ -58,6 +63,39 @@ namespace DADTKV.initializer
                                 break;
                         }
                         break;
+                    case "S":
+                        numSlots = int.Parse(components[1]);
+                        break;
+                    case "T":
+                         timeStart = components[1];
+                        break;
+                    case "D":
+                        timeSlots = int.Parse(components[1]);
+                        break;
+                    case "F":
+                        string[] suspicionLog = components;
+                        int timeSlot = int.Parse(components[1]);
+
+                        foreach (string suspicion in suspicionLog)
+                        {
+                            if (suspicion[0] ==  '(')
+                            {
+                                string[] suspects = suspicion.Split(',');
+                                string suspicious = suspects[0].Remove(0,1);
+                                string suspect = suspects[1].Remove(suspects[1].Length - 1,1);
+
+                                foreach (DADProcess process in processes)
+                                {
+
+                                    if (process is DADManagerProcess && process.Id == suspicious)
+                                    {
+                                        ((DADManagerProcess)process).AddSusTuple(new Tuple<int, string>(timeSlot,suspect));
+                                    }
+                                }
+                            }
+                        }
+
+                        break;
                 }
             }
 
@@ -65,18 +103,18 @@ namespace DADTKV.initializer
             {
                 switch (proc)
                 {
-                    case DADLeaseManagerProc LMproc:
-                        LMproc.LmsList = LMlist;
-                        LMproc.TmsList = TMlist;
+                    case DADManagerProcess MProc:
+                        MProc.NumSlots = numSlots;
+                        MProc.TimeSlot = timeSlots;
+                        MProc.LmsList = LMlist;
+                        MProc.TmsList = TMlist;
                         break;
-                    case DADTransactionManagerProc LMproc:
-                        LMproc.LmsList = LMlist;
-                        LMproc.TmsList = TMlist;
-                        break;
+
                     case DADClientProc LMproc:
                         LMproc.TmsList = TMlist;
                         break;
                 }
+                proc.TimeStart = timeStart;
             }
 
             foreach (var proc in processes)

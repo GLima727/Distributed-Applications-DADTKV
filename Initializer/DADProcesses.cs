@@ -28,8 +28,8 @@ namespace DADTKV.initializer
             set { _processStartInfo = value; }
         }
 
-        private int _timeSart = 0;
-        public int TimeStart
+        private string _timeSart = "";
+        public string TimeStart
         {
             get { return _timeSart; }
             set { _timeSart = value; }
@@ -54,7 +54,7 @@ namespace DADTKV.initializer
             string res = "";
 
             foreach (Tuple<string, string> tm in TmsList)
-                res += $"{tm.Item1}%{tm.Item2}";
+                res += $"{tm.Item1}%{tm.Item2},";
 
             return res;
         }
@@ -106,6 +106,11 @@ namespace DADTKV.initializer
             set { _susList = value; }
         }
 
+        public void AddSusTuple(Tuple<int, string> susList)
+        {
+            _susList.Add(susList);
+        }
+
         private int _timeSlot = 0;
         public int TimeSlot
         {
@@ -125,7 +130,7 @@ namespace DADTKV.initializer
             string res = "";
 
             foreach (Tuple<int, string> sus in this.SusList)
-                res += $"{sus.Item1}%{sus.Item2}";
+                res += $"{sus.Item1}%{sus.Item2},";
 
             return res;
         }
@@ -145,7 +150,7 @@ namespace DADTKV.initializer
             string res = "";
 
             foreach (Tuple<string, string> peer in LmsList)
-                res += $"{peer.Item1}%{peer.Item2}";
+                res += $"{peer.Item1}%{peer.Item2},";
 
             return res;
         }
