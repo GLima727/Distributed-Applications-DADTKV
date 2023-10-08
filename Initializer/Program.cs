@@ -78,6 +78,11 @@ namespace DADTKV.initializer
                         break;
                 }
             }
+
+            foreach (var proc in processes)
+            {
+                Console.WriteLine(proc.GetProcessArgs());
+            }
         }
     }
 }

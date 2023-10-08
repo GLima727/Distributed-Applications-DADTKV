@@ -8,39 +8,45 @@ namespace DADTKV.initializer
     /// </summary>  
     public class DADProcess
     {
-        public DADProcess(string projectPath, string id)
-        {
-            this.ProjectPath = projectPath;
-            this.Id = id;
-            StartInfo = new ProcessStartInfo();
-        }
-
-        public ProcessStartInfo StartInfo
-        {
-            get { return StartInfo; }
-            set { StartInfo = value; }
-        }
-
+        private string _projectPath = "";
         public string ProjectPath
         {
-            get { return ProjectPath; }
-            set { ProjectPath = value; }
-        }
-        public string Id
-        {
-            get { return Id; }
-            set { Id = value; }
-        }
-        public int TimeStart
-        {
-            get { return TimeStart; }
-            set { TimeStart = value; }
+            get { return _projectPath; }
+            set { _projectPath = value; }
         }
 
+        private string _id = "";
+        public string Id
+        {
+            get { return _id; }
+            set { _id = value; }
+        }
+        private ProcessStartInfo _processStartInfo;
+        public ProcessStartInfo StartInfo
+        {
+            get { return _processStartInfo; }
+            set { _processStartInfo = value; }
+        }
+
+        private int _timeSart = 0;
+        public int TimeStart
+        {
+            get { return _timeSart; }
+            set { _timeSart = value; }
+        }
+
+        private List<Tuple<string, string>> _tmsList = new List<Tuple<string, string>>();
         public List<Tuple<string, string>> TmsList
         {
-            get { return TmsList; }
-            set { TmsList = value; }
+            get { return _tmsList; }
+            set { _tmsList = value; }
+        }
+
+        public DADProcess(string projectPath, string id)
+        {
+            _projectPath = projectPath;
+            _id = id;
+            _processStartInfo = new ProcessStartInfo();
         }
 
         public string GetTmsString()
@@ -56,9 +62,9 @@ namespace DADTKV.initializer
 
         public virtual string GetProcessArgs()
         {
-            return $"--id {Id}" +
-                $"--tmStart" +
-                $"--tms {GetTmsString()}";
+            return $"--id {Id} " +
+                $"--tmStart " +
+                $"--tms {GetTmsString()} ";
         }
     }
 
@@ -69,37 +75,49 @@ namespace DADTKV.initializer
     {
         public DADManagerProcess(string projectPath, string id, string url) : base(projectPath, id)
         {
-            this.Url = url;
+            _url = url;
         }
+
+        private string _url;
         public string Url
         {
-            get { return Url; }
-            set { Url = value; }
+            get { return _url; }
+            set { _url = value; }
         }
+
+        private int _numSlots;
         public int NumSlots
         {
-            get { return NumSlots; }
-            set { NumSlots = value; }
+            get { return _numSlots; }
+            set { _numSlots = value; }
         }
+
+        private List<Tuple<string, string>> _lmsList = new List<Tuple<string, string>>();
         public List<Tuple<string, string>> LmsList
         {
-            get { return LmsList; }
-            set { LmsList = value; }
+            get { return _lmsList; }
+            set { _lmsList = value; }
         }
+
+        private List<Tuple<int, string>> _susList = new List<Tuple<int, string>>();
         public List<Tuple<int, string>> SusList
         {
-            get { return SusList; }
-            set { SusList = value; }
+            get { return _susList; }
+            set { _susList = value; }
         }
+
+        private int _timeSlot = 0;
         public int TimeSlot
         {
-            get { return TimeSlot; }
-            set { TimeSlot = value; }
+            get { return _timeSlot; }
+            set { _timeSlot = value; }
         }
+
+        private List<int> _roundsDown = new List<int>();
         public List<int> RoundsDown
         {
-            get { return RoundsDown; }
-            set { RoundsDown = value; }
+            get { return _roundsDown; }
+            set { _roundsDown = value; }
         }
 
         public string GetSuspiciousListString()
@@ -135,12 +153,12 @@ namespace DADTKV.initializer
         public override string GetProcessArgs()
         {
             return base.GetProcessArgs() +
-                $"--url {Url}" +
-                $"--timeSlot {TimeSlot}" +
-                $"--numSlot {NumSlots}" +
-                $"--lms {GetLmsString()}" +
-                $"--susList {GetSuspiciousListString()}" +
-                $"--roundsDown {GetRoundsDownString()}";
+                $"--url {Url} " +
+                $"--timeSlot {TimeSlot} " +
+                $"--numSlot {NumSlots} " +
+                $"--lms {GetLmsString()} " +
+                $"--susList {GetSuspiciousListString()} " +
+                $"--roundsDown {GetRoundsDownString()} ";
         }
     }
 
@@ -215,7 +233,6 @@ namespace DADTKV.initializer
     public class DADClientProc : DADProcess
     {
         public string script = "";
-
         public DADClientProc(string projectPath, string id, string script) : base(projectPath, id)
         {
             this.script = script;
@@ -224,7 +241,7 @@ namespace DADTKV.initializer
         public override string GetProcessArgs()
         {
             return base.GetProcessArgs() +
-                $"--script {script}";
+                $"--script {script} ";
         }
 
         public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
