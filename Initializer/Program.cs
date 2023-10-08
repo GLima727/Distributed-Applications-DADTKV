@@ -22,13 +22,11 @@ namespace DADTKV.initializer
             // VARIABLES //
             string projectPath = InitializerParser.GetCurrrentPath();
             List<string> file_lines = new List<string>(File.ReadAllLines(filePath));
-            string leaserList = InitializerParser.GetLeasersList(file_lines);
-            string tmIDs = InitializerParser.getTransManIds(file_lines);
-            string tmAdresses = InitializerParser.getTransManAddresses(file_lines);
-            string lmAdresses = InitializerParser.getLeaseManAddresses(file_lines);
 
+            var LMlist = new List<Tuple<string, string>>();
+            var TMlist = new List<Tuple<string, string>>();
+            var CLlist = new List<Tuple<string, string>>();
             //-------------------------------------------------------------------------//
-
 
             // Process list
             var processes = new List<DADProcess>();
@@ -48,19 +46,38 @@ namespace DADTKV.initializer
                         switch (processType)
                         {
                             case "T":
-                                processes.Add(new DADTransactionManagerProc(projectPath, processId,processArg, tmIDs, tmAdresses, lmAdresses));
+                                processes.Add(new DADTransactionManagerProc(projectPath, processId, processArg));
+                                LMlist.Add(new Tuple<string, string>(processId, processArg));
                                 break;
                             case "L":
-                                processes.Add(new DADLeaseManagerProc(projectPath, processId, processArg, tmIDs, tmAdresses, leaserList));
+                                processes.Add(new DADLeaseManagerProc(projectPath, processId, processArg));
+                                TMlist.Add(new Tuple<string, string>(processId, processArg));
                                 break;
                             case "C":
-                                processes.Add(new DADClientProc(projectPath, processId,processArg, tmIDs, tmAdresses));
+                                processes.Add(new DADClientProc(projectPath, processId, processArg));
                                 break;
                         }
                         break;
                 }
             }
 
+            foreach (var proc in processes)
+            {
+                switch (proc)
+                {
+                    case DADLeaseManagerProc LMproc:
+                        LMproc.LmsList = LMlist;
+                        LMproc.TmsList = TMlist;
+                        break;
+                    case DADTransactionManagerProc LMproc:
+                        LMproc.LmsList = LMlist;
+                        LMproc.TmsList = TMlist;
+                        break;
+                    case DADClientProc LMproc:
+                        LMproc.TmsList = TMlist;
+                        break;
+                }
+            }
         }
     }
 }

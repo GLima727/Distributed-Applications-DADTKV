@@ -1,4 +1,3 @@
-using System;
 using System.Diagnostics;
 
 
@@ -7,252 +6,214 @@ namespace DADTKV.initializer
     /// <summary>
     ///  Defines the behaviour of a command.
     /// </summary>  
-    public interface DADProcess
+    public class DADProcess
     {
-        public ProcessStartInfo GetProcessStartInfo(OperatingSystem os);
+        public DADProcess(string projectPath, string id)
+        {
+            this.ProjectPath = projectPath;
+            this.Id = id;
+            StartInfo = new ProcessStartInfo();
+        }
+
+        public ProcessStartInfo StartInfo
+        {
+            get { return StartInfo; }
+            set { StartInfo = value; }
+        }
+
+        public string ProjectPath
+        {
+            get { return ProjectPath; }
+            set { ProjectPath = value; }
+        }
+        public string Id
+        {
+            get { return Id; }
+            set { Id = value; }
+        }
+
+        public List<Tuple<string, string>> TmsList
+        {
+            get { return TmsList; }
+            set { TmsList = value; }
+        }
+
+        public string GetTmsString()
+        {
+            string res = "";
+
+            foreach (Tuple<string, string> tm in TmsList)
+                res += $"{tm.Item1}%{tm.Item2}";
+
+            return res;
+        }
+
+
+        public virtual string GetProcessArgs()
+        {
+            return $"--id {Id}" + $"--tms {GetTmsString()}";
+        }
+    }
+
+    /// <summary>
+    ///  Defines the behaviour of a command.
+    /// </summary>  
+    public class DADManagerProcess : DADProcess
+    {
+        public DADManagerProcess(string projectPath, string id, string url) : base(projectPath, id)
+        {
+            this.Url = url;
+        }
+
+        public string Url
+        {
+            get { return Url; }
+            set { Url = value; }
+        }
+
+        public List<Tuple<string, string>> LmsList
+        {
+            get { return LmsList; }
+            set { LmsList = value; }
+        }
+        public List<Tuple<int, string>> SusList
+        {
+            get { return SusList; }
+            set { SusList = value; }
+        }
+        public int TimeSlot
+        {
+            get { return TimeSlot; }
+            set { TimeSlot = value; }
+        }
+        public List<int> RoundsDown
+        {
+            get { return RoundsDown; }
+            set { RoundsDown = value; }
+        }
+
+        public string GetSuspiciousListString()
+        {
+            string res = "";
+
+            foreach (Tuple<int, string> sus in this.SusList)
+                res += $"{sus.Item1}%{sus.Item2}";
+
+            return res;
+        }
+
+        public string GetRoundsDownString()
+        {
+            string res = "";
+
+            foreach (int roundDown in RoundsDown)
+                res += $"{roundDown},";
+
+            return res;
+        }
+
+        public string GetLmsString()
+        {
+            string res = "";
+
+            foreach (Tuple<string, string> peer in LmsList)
+                res += $"{peer.Item1}%{peer.Item2}";
+
+            return res;
+        }
+
+        public override string GetProcessArgs()
+        {
+            return base.GetProcessArgs() +
+                $"--url {Url}" +
+                $"--timeSlot {TimeSlot}" +
+                $"--lms {GetLmsString()}" +
+                $"--susList {GetSuspiciousListString()}" +
+                $"--roundsDown {GetRoundsDownString()}";
+        }
     }
 
     /// <summary>
     /// Represents a Lease Manager process.
     /// </summary>
-    public class DADLeaseManagerProc : DADProcess
+    public class DADLeaseManagerProc : DADManagerProcess
     {
-        private string projectPath = "";
-        private string id = "";
-        private string url = "";
-        private string peers = "";
-        private List<Tuple<int, string>> suspiciousList = new List<Tuple<int, string>>();
-        private int timeSlot = 0;
-        private List<int> roundsDown = new List<int>();
-        private string tmUrls;
-        private string tmIds;
-        public ProcessStartInfo startInfo;
 
-        public DADLeaseManagerProc(string projectPath, string id, string url,string tmIds, string tmUrls, string peers)
-        {
-            this.projectPath = projectPath;
-            this.id = id;
-            this.url = url;
-            this.tmIds = tmIds;
-            this.tmUrls = tmUrls;
-            this.peers = peers;
-            startInfo = new ProcessStartInfo();
-        }
-
-        public void SetLeaseManagerPeers(string peers)
-        {
-            this.peers = peers;
-        }
-
-        public void SetTimeSlot(int timeSlot)
-        {
-            this.timeSlot = timeSlot;
-        }
-
-        public void SetSuspiciousList(List<Tuple<int, string>> suspiciousList)
-        {
-            this.suspiciousList = suspiciousList;
-        }
-
-        private string GetSuspiciousListString()
-        {
-            return "";
-        }
-
-        public void SetRoundsDown(List<int> roundsDown)
-        {
-            this.roundsDown = roundsDown;
-        }
-
-        private string GetRoundsDownString()
-        {
-            return "";
-        }
-
-        private string GetTmsIdsString()
-        {
-            return tmIds;
-        }
-
-        private string GetTmsUrlsString()
-        {
-            return tmUrls;
-        }
-
-        private string GetProcessArgs()
-        {
-            return $"--id {id}" +
-                $"--url {url}" +
-                $"--timeSlot {timeSlot}" +
-                $"--peers {peers}" +
-                $"--susList {GetSuspiciousListString()}" +
-                $"--roundsDown {GetRoundsDownString()}" +
-                $"--tmIds {GetTmsIdsString()}" +
-                $"--tmUrls {GetTmsUrlsString()}" +
-                "";
-        }
+        public DADLeaseManagerProc(string projectPath, string id, string url) : base(projectPath, id, url) { }
 
         public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
         {
-
             switch (os.Platform)
             {
                 case PlatformID.Win32NT:
-                    startInfo.FileName = "cmd.exe";
-                    startInfo.Arguments =
-                        $"/k cd \"{projectPath + "\\LeaseManager"}\"" +
+                    StartInfo.FileName = "cmd.exe";
+                    StartInfo.Arguments =
+                        $"/k cd \"{ProjectPath + "\\LeaseManager"}\"" +
                         " && " +
-                        "dotnet run " + GetProcessArgs();
-                    startInfo.UseShellExecute = true;
+                        "dotnet run " + base.GetProcessArgs();
+                    StartInfo.UseShellExecute = true;
                     break;
                 case PlatformID.Unix:
-                    startInfo.FileName = "/bin/bash";
-                    startInfo.Arguments =
-                        $"-c \"kgx -e 'cd {projectPath + "LeaseManager"}" +
+                    StartInfo.FileName = "/bin/bash";
+                    StartInfo.Arguments =
+                        $"-c \"kgx -e 'cd {ProjectPath + "LeaseManager"}" +
                         " && " +
-                        "dotnet run " + GetProcessArgs() + "'\"";
+                        "dotnet run " + base.GetProcessArgs() + "'\"";
                     break;
             }
-
-            return startInfo;
+            return StartInfo;
         }
-
     }
 
     /// <summary>
     /// Represents a Transaction Manager process.
     /// </summary>
-     public class DADTransactionManagerProc : DADProcess
+    public class DADTransactionManagerProc : DADManagerProcess
     {
-        private string projectPath = "";
-        private string id = "";
-        private string url = "";
-        private List<Tuple<int, string>> suspiciousList = new List<Tuple<int, string>>();
-        private int timeSlot = 0;
-        private string tmIds = "";
-        private string tmUrls = "";
-        private string lmUrls = "";
-        public ProcessStartInfo startInfo;
-
-
-        public DADTransactionManagerProc(string projectPath, string id, string url, string tmIds, string tmUrls, string lmUrls)
-        {
-            this.projectPath = projectPath;
-            this.id = id;
-            this.url = url;
-            this.tmIds = tmIds;
-            this.tmUrls = tmUrls;
-            this.lmUrls = lmUrls;
-            startInfo = new ProcessStartInfo();
-        }
-
-        public void SetTimeSlot(int timeSlot)
-        {
-            this.timeSlot = timeSlot;
-        }
-
-        public void SetSuspiciousList(List<Tuple<int, string>> suspiciousList)
-        {
-            this.suspiciousList = suspiciousList;
-        }
-
-        private string GetSuspiciousListString()
-        {
-            return "";
-        }
-        private string GetTmsIdsString()
-        {
-            return tmIds;
-        }
-
-        private string GetTmsUrlsString()
-        {
-            return tmUrls;
-        }
-
-        private string GetLmsUrlsString()
-        {
-            return lmUrls;
-        }
-
-        private string GetProcessArgs()
-        {
-            return $"--id {id}" +
-                $"--url {url}" +
-                $"--timeSlot {timeSlot}" +
-                $"--susList {GetSuspiciousListString()}" +
-                $"--tmIds {GetTmsIdsString()}" +
-                $"--tmUrls {GetTmsUrlsString()}" +
-                $"--lmUrls {GetLmsUrlsString()}" +
-                "";
-        }
+        public DADTransactionManagerProc(string projectPath, string id, string url) : base(projectPath, id, url) { }
 
         public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
         {
-
             switch (os.Platform)
             {
                 case PlatformID.Win32NT:
-                    startInfo.FileName = "cmd.exe";
-                    startInfo.Arguments =
-                        $"/k cd \"{projectPath + "\\TransactionManager"}\"" +
+                    StartInfo.FileName = "cmd.exe";
+                    StartInfo.Arguments =
+                        $"/k cd \"{ProjectPath + "\\TransactionManager"}\"" +
                         " && " +
-                        "dotnet run " + GetProcessArgs();
-                    startInfo.UseShellExecute = true;
+                        "dotnet run " + base.GetProcessArgs();
+                    StartInfo.UseShellExecute = true;
                     break;
                 case PlatformID.Unix:
-                    startInfo.FileName = "/bin/bash";
-                    startInfo.Arguments =
-                        $"-c \"kgx -e 'cd {projectPath + "TransactionManager"}" +
+                    StartInfo.FileName = "/bin/bash";
+                    StartInfo.Arguments =
+                        $"-c \"kgx -e 'cd {ProjectPath + "TransactionManager"}" +
                         " && " +
-                        "dotnet run " + GetProcessArgs() + "'\"";
+                        "dotnet run " + base.GetProcessArgs() + "'\"";
                     break;
             }
 
-            return startInfo;
+            return StartInfo;
         }
     }
-    
+
 
     /// <summary>
     /// Represents a Client process.
     /// </summary>
     public class DADClientProc : DADProcess
     {
-        private string projectPath = "";
-        private string id = "";
-        private string script = "";
-        private string tmIDs;
-        private string tmUrls;
-        public ProcessStartInfo startInfo;
+        public string script = "";
 
-        public DADClientProc(string projectPath, string id, string script, string tmIDs, string tmUrls)
+        public DADClientProc(string projectPath, string id, string script) : base(projectPath, id)
         {
-            this.projectPath = projectPath;
-            this.id = id;
             this.script = script;
-            this.tmIDs = tmIDs;
-            this.tmUrls = tmUrls;
-            startInfo = new ProcessStartInfo();
-            this.tmIDs = tmIDs;
-        }
-        private string GetTmsUrlsString()
-        {
-            return tmUrls;
         }
 
-        private string GetTmsIdsString()
+        public override string GetProcessArgs()
         {
-            return tmIDs;
-        }
-
-        private string GetProcessArgs()
-        {
-            return $"--id {id}" +
-                $"--script {script}" +
-                $"--tmIDs {GetTmsIdsString()}" +
-                $"--tmUrls {GetTmsUrlsString()}" +
-                "";
+            return base.GetProcessArgs() +
+                $"--script {script}";
         }
 
         public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
@@ -261,23 +222,23 @@ namespace DADTKV.initializer
             switch (os.Platform)
             {
                 case PlatformID.Win32NT:
-                    startInfo.FileName = "cmd.exe";
-                    startInfo.Arguments =
-                        $"/k cd \"{projectPath + "\\Client"}\"" +
+                    StartInfo.FileName = "cmd.exe";
+                    StartInfo.Arguments =
+                        $"/k cd \"{ProjectPath + "\\Client"}\"" +
                         " && " +
                         "dotnet run " + GetProcessArgs();
-                    startInfo.UseShellExecute = true;
+                    StartInfo.UseShellExecute = true;
                     break;
                 case PlatformID.Unix:
-                    startInfo.FileName = "/bin/bash";
-                    startInfo.Arguments =
-                        $"-c \"kgx -e 'cd {projectPath + "Client"}" +
+                    StartInfo.FileName = "/bin/bash";
+                    StartInfo.Arguments =
+                        $"-c \"kgx -e 'cd {ProjectPath + "Client"}" +
                         " && " +
                         "dotnet run " + GetProcessArgs() + "'\"";
                     break;
             }
 
-            return startInfo;
+            return StartInfo;
         }
     }
 
