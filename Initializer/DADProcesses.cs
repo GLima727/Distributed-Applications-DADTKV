@@ -59,11 +59,15 @@ namespace DADTKV.initializer
             return res;
         }
 
+        public virtual ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
+        {
+            return new ProcessStartInfo();
+        }
 
         public virtual string GetProcessArgs()
         {
             return $"--id {Id} " +
-                $"--tmStart " +
+                $"--timeStart {TimeStart} " +
                 $"--tms {GetTmsString()} ";
         }
     }
@@ -175,7 +179,7 @@ namespace DADTKV.initializer
 
         public DADLeaseManagerProc(string projectPath, string id, string url) : base(projectPath, id, url) { }
 
-        public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
+        public override ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
         {
             switch (os.Platform)
             {
@@ -206,7 +210,7 @@ namespace DADTKV.initializer
     {
         public DADTransactionManagerProc(string projectPath, string id, string url) : base(projectPath, id, url) { }
 
-        public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
+        public override ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
         {
             switch (os.Platform)
             {
@@ -249,7 +253,7 @@ namespace DADTKV.initializer
                 $"--script {script} ";
         }
 
-        public ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
+        public override ProcessStartInfo GetProcessStartInfo(OperatingSystem os)
         {
 
             switch (os.Platform)
@@ -274,6 +278,5 @@ namespace DADTKV.initializer
             return StartInfo;
         }
     }
-
 }
 

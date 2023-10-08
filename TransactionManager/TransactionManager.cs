@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DADTKV.transactionManager
 {
-    public class TransactionManager
+    class TransactionManager
     {
         private string _id = "";
         public string Id {

@@ -1,7 +1,7 @@
 
 namespace DADTKV.transactionManager
 {
-    public class FlagReader
+    class FlagReader
     {
 
         /*

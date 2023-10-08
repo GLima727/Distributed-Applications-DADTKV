@@ -5,6 +5,34 @@ namespace DADTKV.initializer
 {
     class Program
     {
+        static string GetCurrrentPath()
+        {
+            string currentDirectory = Directory.GetCurrentDirectory().ToString();
+
+            string[] directorys;
+            char sepr;
+            if (currentDirectory.Contains('\\'))
+            {
+                sepr = '\\';
+                directorys = currentDirectory.Split('\\');
+            }
+            else
+            {
+                sepr = '/';
+                directorys = currentDirectory.Split('/');
+            }
+
+            string dirHead = "";
+            foreach (string directory in directorys)
+            {
+                if (directory.Equals("Initializer"))
+                    break;
+                dirHead += directory + sepr;
+            }
+
+            return dirHead;
+        }
+
         public static void Main(string[] args)
         {
             string filePath = args[0];
@@ -21,7 +49,7 @@ namespace DADTKV.initializer
             Console.WriteLine("Initializing...");
 
             // VARIABLES //
-            string projectPath = InitializerParser.GetCurrrentPath();
+            string projectPath = GetCurrrentPath();
             List<string> file_lines = new List<string>(File.ReadAllLines(filePath));
 
             string timeStart = "";
@@ -67,7 +95,7 @@ namespace DADTKV.initializer
                         numSlots = int.Parse(components[1]);
                         break;
                     case "T":
-                         timeStart = components[1];
+                        timeStart = components[1];
                         break;
                     case "D":
                         timeSlots = int.Parse(components[1]);
@@ -78,18 +106,17 @@ namespace DADTKV.initializer
 
                         foreach (string suspicion in suspicionLog)
                         {
-                            if (suspicion[0] ==  '(')
+                            if (suspicion[0] == '(')
                             {
                                 string[] suspects = suspicion.Split(',');
-                                string suspicious = suspects[0].Remove(0,1);
-                                string suspect = suspects[1].Remove(suspects[1].Length - 1,1);
+                                string suspicious = suspects[0].Remove(0, 1);
+                                string suspect = suspects[1].Remove(suspects[1].Length - 1, 1);
 
                                 foreach (DADProcess process in processes)
                                 {
-
                                     if (process is DADManagerProcess && process.Id == suspicious)
                                     {
-                                        ((DADManagerProcess)process).AddSusTuple(new Tuple<int, string>(timeSlot,suspect));
+                                        ((DADManagerProcess)process).AddSusTuple(new Tuple<int, string>(timeSlot, suspect));
                                     }
                                 }
                             }
@@ -118,9 +145,9 @@ namespace DADTKV.initializer
             }
 
             foreach (var proc in processes)
-            {
                 Console.WriteLine(proc.GetProcessArgs());
-            }
+            foreach (var proc in processes)
+                Process.Start(proc.GetProcessStartInfo(os));
         }
     }
 }
