@@ -31,6 +31,11 @@ namespace DADTKV.initializer
             get { return Id; }
             set { Id = value; }
         }
+        public int TimeStart
+        {
+            get { return TimeStart; }
+            set { TimeStart = value; }
+        }
 
         public List<Tuple<string, string>> TmsList
         {
@@ -51,7 +56,9 @@ namespace DADTKV.initializer
 
         public virtual string GetProcessArgs()
         {
-            return $"--id {Id}" + $"--tms {GetTmsString()}";
+            return $"--id {Id}" +
+                $"--tmStart" +
+                $"--tms {GetTmsString()}";
         }
     }
 
@@ -64,13 +71,16 @@ namespace DADTKV.initializer
         {
             this.Url = url;
         }
-
         public string Url
         {
             get { return Url; }
             set { Url = value; }
         }
-
+        public int NumSlots
+        {
+            get { return NumSlots; }
+            set { NumSlots = value; }
+        }
         public List<Tuple<string, string>> LmsList
         {
             get { return LmsList; }
@@ -127,6 +137,7 @@ namespace DADTKV.initializer
             return base.GetProcessArgs() +
                 $"--url {Url}" +
                 $"--timeSlot {TimeSlot}" +
+                $"--numSlot {NumSlots}" +
                 $"--lms {GetLmsString()}" +
                 $"--susList {GetSuspiciousListString()}" +
                 $"--roundsDown {GetRoundsDownString()}";
@@ -158,7 +169,7 @@ namespace DADTKV.initializer
                     StartInfo.Arguments =
                         $"-c \"kgx -e 'cd {ProjectPath + "LeaseManager"}" +
                         " && " +
-                        "dotnet run " + base.GetProcessArgs() + "'\"";
+                        "dotnet run " + GetProcessArgs() + "'\"";
                     break;
             }
             return StartInfo;
