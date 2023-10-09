@@ -7,9 +7,10 @@
             var tm = new TransactionManager();
             for (int i = 0; i < args.Length; i++)
             {
-                if (args[i].StartsWith("--"))
+                if (i + 1 >= args.Length)
+                    break;
+                if (args[i].StartsWith("--") && !args[i + 1].StartsWith("--"))
                 {
-
                     if (FlagReader.ArgumentActions.ContainsKey(args[i]))
                     {
                         FlagReader.ArgumentActions[args[i]](args[i + 1], tm);

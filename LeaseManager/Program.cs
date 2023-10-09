@@ -7,7 +7,9 @@
             var lm = new LeaseManager();
             for (int i = 0; i < args.Length; i++)
             {
-                if (args[i].StartsWith("--"))
+                if (i + 1 >= args.Length)
+                    break;
+                if (args[i].StartsWith("--") && !args[i+1].StartsWith("--"))
                 {
                     if (FlagReader.ArgumentActions.ContainsKey(args[i]))
                     {
@@ -17,7 +19,9 @@
                 }
             }
 
-            Console.WriteLine(lm.Id);
+            foreach (var elm in lm.Lms) {
+                Console.WriteLine($"{elm.Item1}, {elm.Item2}");
+            }
         }
     }
 }

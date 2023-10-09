@@ -80,11 +80,11 @@ namespace DADTKV.initializer
                         {
                             case "T":
                                 processes.Add(new DADTransactionManagerProc(projectPath, processId, processArg));
-                                LMlist.Add(new Tuple<string, string>(processId, processArg));
+                                TMlist.Add(new Tuple<string, string>(processId, processArg));
                                 break;
                             case "L":
                                 processes.Add(new DADLeaseManagerProc(projectPath, processId, processArg));
-                                TMlist.Add(new Tuple<string, string>(processId, processArg));
+                                LMlist.Add(new Tuple<string, string>(processId, processArg));
                                 break;
                             case "C":
                                 processes.Add(new DADClientProc(projectPath, processId, processArg));
