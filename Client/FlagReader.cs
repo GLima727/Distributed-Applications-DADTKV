@@ -19,19 +19,19 @@
             cl.Script = arg;
         }
 
-        public static void TmsReader(string arg, Client tm)
+        public static void TmsReader(string arg, Client cl)
         {
-            List<Tuple<string, string>> Tms = new List<Tuple<string, string>>();
+            List<string> Tms = new List<string>();
             foreach (string transMan in arg.Split(','))
             {
                 if (transMan != "")
                 {
                     string[] elems = transMan.Split("%");
-                    Tms.Add(new Tuple<string, string>(elems[0], elems[1]));
+                    Tms.Add(elems[1]);
                 }
 
             }
-            tm.Tms = Tms;
+            cl.Tms = Tms;
         }
     }
 }
