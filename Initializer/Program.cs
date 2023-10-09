@@ -102,11 +102,21 @@ namespace DADTKV.initializer
                     case "F":
                         string[] suspicionLog = components;
                         int timeSlot = int.Parse(components[1]);
-
+                        int roundsDownPart = 1;
+                        int numOfProc = -2;
                         foreach (string suspicion in suspicionLog)
                         {
+                            if (roundsDownPart == 1 && suspicion[0] == 'C') 
+                            {
+                                if (processes[numOfProc] is DADManagerProcess manProcess)
+                                {
+                                    manProcess.AddRoundsDown(timeSlot);
+                                    processes[numOfProc] = manProcess;
+                                }
+                            }
                             if (suspicion[0] == '(')
                             {
+                                roundsDownPart = 0;
                                 string[] suspects = suspicion.Split(',');
                                 string suspicious = suspects[0].Remove(0, 1);
                                 string suspect = suspects[1].Remove(suspects[1].Length - 1, 1);
@@ -119,6 +129,7 @@ namespace DADTKV.initializer
                                     }
                                 }
                             }
+                            numOfProc++;
                         }
 
                         break;

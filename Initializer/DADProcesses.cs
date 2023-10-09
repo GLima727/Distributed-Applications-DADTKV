@@ -129,6 +129,11 @@ namespace DADTKV.initializer
             set { _roundsDown = value; }
         }
 
+        public void AddRoundsDown(int round)
+        {
+            _roundsDown.Add(round);
+        }
+
         public string GetSuspiciousListString()
         {
             string res = "";
