@@ -58,7 +58,6 @@ namespace DADTKV.initializer
 
             var LMlist = new List<Tuple<string, string>>();
             var TMlist = new List<Tuple<string, string>>();
-            var CLlist = new List<Tuple<string, string>>();
             //-------------------------------------------------------------------------//
 
             // Process list
@@ -137,8 +136,8 @@ namespace DADTKV.initializer
                         MProc.TmsList = TMlist;
                         break;
 
-                    case DADClientProc LMproc:
-                        LMproc.TmsList = TMlist;
+                    case DADClientProc CLproc:
+                        CLproc.TmsList = TMlist;
                         break;
                 }
                 proc.TimeStart = timeStart;
