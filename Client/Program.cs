@@ -4,7 +4,7 @@
     {
         public static void Main(string[] args)
         {
-            var cl = new Client();
+            Client cl = new Client();
             for (int i = 0; i < args.Length; i++)
             {
                 if (i + 1 >= args.Length)
@@ -18,11 +18,6 @@
                     }
                 }
             }
-
-            //foreach (var elm in lm.Lms)
-            //{
-            //    Console.WriteLine($"{elm.Item1}, {elm.Item2}");
-            //}
         }
     }
 }

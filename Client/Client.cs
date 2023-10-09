@@ -10,10 +10,63 @@
 
         public string Script { get { return _script; } set { _script = value; } }
 
-        private List<Tuple<string,string>> _tms = new List<Tuple<string,string>>();
+        private List<string> _tms = new List<string>();
 
-        public List<Tuple<string,string>> Tms { get { return _tms; } set { _tms = value; } }
+        public List<string> Tms { get { return _tms; } set { _tms = value; } }
 
-        public Client() { }
+        private List<Command> _commands;
+
+        public List<Command> Commands { get { return _commands; } set { _commands = value; } }
+
+        public Client()
+        {
+            //Thread.Sleep(5000);
+            Console.WriteLine("Started client: " + Id);
+            
+            //ClientService clientServer = new ClientService(Tms, Id);
+
+            //ParseAndExecuteCommands(clientServer);
+
+        }
+
+        public void ParseAndExecuteCommands(ClientService clientServer)
+        {
+            try
+            {
+                Commands = ScriptParser.ParseScript(Script);
+
+
+                foreach (Command command in Commands)
+                {
+                    switch (command)
+                    {
+                        case TCommand:
+                            TCommand tCommand = (TCommand)command;
+                            clientServer.SubmitTransaction(tCommand.GetReadSet(), tCommand.GetWriteSet());
+                            break;
+                        case SCommand:
+                            SCommand sCommand = (SCommand)command;
+                            clientServer.Status();
+                            break;
+                        case WCommand:
+                            WCommand wCommand = (WCommand)command;
+                            Thread.Sleep(wCommand.GetWaitTime());
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Caught Exception: {ex.Message}");
+            }
+
+            if (Commands != null)
+            {
+                foreach (Command command in Commands)
+                {
+                    command.Print();
+                }
+            }
+        }
     }
 }
