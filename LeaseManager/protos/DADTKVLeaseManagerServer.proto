@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message RequestLeaseRequest {
+  repeated string leases = 1;
+  string tm_id = 2;
+}
+
+message LeaseRequestReply {}
+
+service LeaseManagerServie {
+  rpc RequestLease(RequestLeaseRequest) returns (LeaseRequestReply);
+}

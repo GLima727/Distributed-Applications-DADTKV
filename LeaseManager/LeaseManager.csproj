@@ -15,6 +15,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <Protobuf Include="protos\DADTKVLeaseManagerServer.proto" GrpcServices="Server" />
+    <Protobuf Include="protos\DADTKVCrossServerLeaseManager.proto" GrpcServices="Both" />
+    <Protobuf Include="protos\DADTKVLeaseManager.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

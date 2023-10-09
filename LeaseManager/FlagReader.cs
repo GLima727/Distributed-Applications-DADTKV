@@ -22,6 +22,19 @@ namespace DADTKV.leaseManager
 
         public static void UrlReader(string arg, LeaseManager lm)
         {
+            int porti = arg.LastIndexOf(':');
+            int urli = arg.IndexOf(':');
+
+            if (porti != -1 && urli != -1)
+            {
+                lm.Url = arg.Substring(urli + 3, porti - urli - 3);
+                lm.Port = int.Parse(arg.Substring(porti + 1));
+            }
+            else
+            {
+                throw new Exception("The url is invalid!");
+            }
+
             lm.Url = arg;
         }
 

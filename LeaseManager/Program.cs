@@ -9,7 +9,7 @@
             {
                 if (i + 1 >= args.Length)
                     break;
-                if (args[i].StartsWith("--") && !args[i+1].StartsWith("--"))
+                if (args[i].StartsWith("--") && !args[i + 1].StartsWith("--"))
                 {
                     if (FlagReader.ArgumentActions.ContainsKey(args[i]))
                     {
@@ -19,9 +19,7 @@
                 }
             }
 
-            foreach (var elm in lm.Lms) {
-                Console.WriteLine($"{elm.Item1}, {elm.Item2}");
-            }
+            lm.Start();
         }
     }
 }

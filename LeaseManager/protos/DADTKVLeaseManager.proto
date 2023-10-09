@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message LeaseSheetMessage {
+    repeated PaxosLeases LeaseOrder = 1;
+}
+
+message LeaseSheetReply {}
+
+message PaxosLeases {
+    string tmId = 1;
+    repeated string leases = 2;
+}
+
+service LeaseManagerService {
+    rpc LeaseSheet (LeaseSheetMessage) returns (LeaseSheetReply);
+}
