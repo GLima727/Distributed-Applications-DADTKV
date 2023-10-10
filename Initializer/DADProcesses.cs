@@ -239,8 +239,6 @@ namespace DADTKV.initializer
             return StartInfo;
         }
     }
-
-
     /// <summary>
     /// Represents a Client process.
     /// </summary>
@@ -249,7 +247,7 @@ namespace DADTKV.initializer
         public string script = "";
         public DADClientProc(string projectPath, string id, string script) : base(projectPath, id)
         {
-            this.script = script;
+            this.script = projectPath + "Initializer\\scripts\\" + script + ".txt";
         }
 
         public override string GetProcessArgs()

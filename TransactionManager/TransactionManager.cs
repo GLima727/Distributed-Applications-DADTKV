@@ -89,7 +89,8 @@ namespace DADTKV.transactionManager
             {
                 Services = {
                     CrossServerTransactionManagerService.BindService(new CrossTMService(this)),
-                    ClientServerService.BindService(new ClientService(this))
+                    ClientServerService.BindService(new ClientService(this)),
+                    LeaseManagerServicing.BindService(new LeaseManagerServicings(this)),
                 },
                 Ports = { serverPort }
             };

@@ -1,4 +1,6 @@
-﻿namespace DADTKV.client
+﻿using Grpc.Net.Client;
+
+namespace DADTKV.client
 {
     class Client
     {
@@ -18,15 +20,21 @@
 
         public List<Command> Commands { get { return _commands; } set { _commands = value; } }
 
-        public Client()
+        public Client() {}
+
+        public List<ClientServerService.ClientServerServiceClient> _tmsChannels
+            = new List<ClientServerService.ClientServerServiceClient>();
+
+        public void createConnectionsToTms()
         {
-            //Thread.Sleep(5000);
-            Console.WriteLine("Started client: " + Id);
-            
-            //ClientService clientServer = new ClientService(Tms, Id);
-
-            //ParseAndExecuteCommands(clientServer);
-
+            // Create connections to other Transmissions Managers
+            foreach (var tm in _tms)
+            {
+                Console.WriteLine("ola");
+                GrpcChannel channel = GrpcChannel.ForAddress(tm);
+                var tmChannel = new ClientServerService.ClientServerServiceClient(channel);
+                _tmsChannels.Add(tmChannel);
+            }
         }
 
         public void ParseAndExecuteCommands(ClientService clientServer)
@@ -67,6 +75,19 @@
                     command.Print();
                 }
             }
+        }
+
+        public void Start()
+        {
+            Console.WriteLine("Started client: " + Id);
+
+            ClientService clientServer = new ClientService(this);
+
+            createConnectionsToTms();
+
+            ParseAndExecuteCommands(clientServer);
+            
+
         }
     }
 }

@@ -2,30 +2,17 @@
 
 namespace DADTKV.client
 {
-    public class ClientService
+    class ClientService
     {
-        private List<ClientServerService.ClientServerServiceClient> transactionManagerServer = new List<ClientServerService.ClientServerServiceClient>();
-        private ClientServerService.ClientServerServiceClient? server = null;
-        private readonly string clientId;
+        private Client _client;
 
         /// <summary>
         /// ClientService Constructor's.
         /// </summary>
-        public ClientService(List<string> transationManAdrr, string id)
+        public ClientService(Client client)
         {
 
-            this.clientId = id;
-            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
-
-            foreach (string addr in transationManAdrr)
-            {
-                Console.WriteLine(addr);
-                GrpcChannel thisChannel = GrpcChannel.ForAddress(addr);
-
-                server = new ClientServerService.ClientServerServiceClient(thisChannel);
-
-                transactionManagerServer.Add(server);
-            }
+            _client = client;
         }
 
         /// <summary>
@@ -34,8 +21,8 @@ namespace DADTKV.client
         public ClientServerService.ClientServerServiceClient GetTransactionManager()
         {
             Random rnd = new Random();
-            int number = rnd.Next(0, transactionManagerServer.Count - 1);
-            return transactionManagerServer[number];
+            int number = rnd.Next(0, _client._tmsChannels.Count);
+            return _client._tmsChannels[number];
         }
 
         /// <summary>
@@ -44,9 +31,9 @@ namespace DADTKV.client
         public void SubmitTransaction(List<string> readSet, List<(string, int)> writeSet)
         {
 
-
+            
             ClientTransactionRequest request = new ClientTransactionRequest();
-            request.ClientId = this.clientId;
+            request.ClientId = _client.Id;
             request.ReadOperations.Add(readSet);
 
             foreach ((string, int) pair in writeSet)
@@ -58,8 +45,8 @@ namespace DADTKV.client
                 };
                 request.WriteOperations.Add(dADInt);
             }
+            
             ClientTransactionReply reply = GetTransactionManager().SubmitTransaction(request);
-
 
             foreach (int value in reply.ObjValues)
             {
@@ -75,7 +62,7 @@ namespace DADTKV.client
         {
             ClientStatusRequest statusRequest = new ClientStatusRequest();
 
-            foreach (ClientServerService.ClientServerServiceClient tm in this.transactionManagerServer)
+            foreach (ClientServerService.ClientServerServiceClient tm in _client._tmsChannels)
             {
                 tm.Status(statusRequest);
             }
