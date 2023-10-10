@@ -38,8 +38,8 @@ namespace DADTKV.leaseManager
         // Private only atributtes
         private int _leaderId = -1;
 
-        private Dictionary<string, PaxosCommunicaitonService.PaxosCommunicaitonServiceClient> _lmsClients =
-            new Dictionary<string, PaxosCommunicaitonService.PaxosCommunicaitonServiceClient>();
+        private Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient> _lmsClients =
+            new Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient>();
 
         private List<LMTMCommunicationService.LMTMCommunicationServiceClient> _tmsClients =
             new List<LMTMCommunicationService.LMTMCommunicationServiceClient>();
@@ -54,7 +54,7 @@ namespace DADTKV.leaseManager
                 if (_lms[i].Item1 != _id)
                 {
                     GrpcChannel channel = GrpcChannel.ForAddress(_lms[i].Item2);
-                    var client = new PaxosCommunicaitonService.PaxosCommunicaitonServiceClient(channel);
+                    var client = new PaxosCommunicationService.PaxosCommunicationServiceClient(channel);
                     _lmsClients[_lms[i].Item1] = client;
                 }
                 else
@@ -93,8 +93,8 @@ namespace DADTKV.leaseManager
             Server server = new Server
             {
                 Services = {
-                    PaxosCommunicaitonService.BindService(new PaxosService(this)),
-                    LMTMCommunicationService.BindService(new LMTMService(this))
+                    PaxosCommunicationService.BindService(new PaxosService(this)),
+                    LMTMCommunicationService.BindService(new (this))
                 },
                 Ports = { serverPort }
             };

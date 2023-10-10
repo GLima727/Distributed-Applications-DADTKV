@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "protos/lease_sheet_definitions.proto";
+
+// Service for Lease Managers to communicate with TM
+
+message LeaseRequest { Lease lease_details = 1; }
+
+message LeaseResponse {}
+
+//do lm para o tm
+message LeaseSheetRequest { repeated Lease lease_sheet = 1; }
+
+message LeaseSheetResponse {}
+
+service LMTMCommunicationService {
+  rpc GetLeaseSheet(LeaseSheetRequest) returns (LeaseSheetResponse);
+  rpc ProcessLeaseRequest(LeaseRequest) returns (LeaseResponse);
+}

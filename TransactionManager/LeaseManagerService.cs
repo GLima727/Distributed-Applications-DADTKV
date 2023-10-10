@@ -2,8 +2,8 @@
 
 namespace DADTKV.transactionManager
 {
-    class LeaseManagerServicings : LeaseManagerServicing.LeaseManagerServicingBase
-    {
+    class LeaseManagerServicings : LMTMCommunicationService.LMTMCommunicationServiceBase
+    { 
         private TransactionManager _transactionManager;
 
         public LeaseManagerServicings(TransactionManager transactionManager)
@@ -11,17 +11,27 @@ namespace DADTKV.transactionManager
             _transactionManager = transactionManager;
         }
 
-        public override Task<LeaseSheetReply> LeaseSheet(LeaseSheetMessage propagateLeasesRequest, ServerCallContext context)
+        public override Task<LeaseSheetResponse> GetLeaseSheet(LeaseSheetRequest propagateLeasesRequest, ServerCallContext context)
         {
-            return Task.FromResult(LeaseSheetImpl(propagateLeasesRequest));
+            return Task.FromResult(GetLeaseSheetImpl(propagateLeasesRequest));
         }
 
-        public LeaseSheetReply LeaseSheetImpl(LeaseSheetMessage propagateLeasesRequest)
+        public LeaseSheetResponse GetLeaseSheetImpl(LeaseSheetRequest request)
         {
+            _transactionManager.leaseSheets = new List<LeaseSheet>();
+            int count = 0;
+            foreach (Lease lease in request.LeaseSheet)
+            {
+                LeaseSheet leaseSheet = new LeaseSheet();
+                leaseSheet.tmID = lease.TmId;
+                leaseSheet.order = count++;
 
+                leaseSheet.leases = new List<string>(lease.Leases);
+                _transactionManager.leaseSheets.Add(leaseSheet);
+            }
+            _transactionManager.signal.Set();
 
-
-            return new LeaseSheetReply();
+            return new LeaseSheetResponse();
         }
 
     }

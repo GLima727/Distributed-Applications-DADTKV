@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message Lease {
+  string tmId = 1;
+  repeated string leases = 2;
+}
+
+message LeaseSheet { repeated Lease leaseSheet = 1; }

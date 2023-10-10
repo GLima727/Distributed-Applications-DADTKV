@@ -11,7 +11,9 @@ namespace DADTKV.transactionManager
         private string _url = "";
         public string Url { get { return _url; } set { _url = value; } }
 
-        private int _port = 0;
+        private int _port = 0; 
+
+        public int Port { get { return _port; } set { _port = value; } }
 
         private int _timeSlot = 0;
         public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
@@ -38,23 +40,31 @@ namespace DADTKV.transactionManager
 
         public List<string> leaseList = new List<string>();
 
+        public List<LeaseSheet> leaseSheets = new List<LeaseSheet>();
+
+        public ManualResetEventSlim signal = new ManualResetEventSlim(false);
+
+        public Dictionary<string, ManualResetEventSlim> transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
+
+        public List<DADInt> dadInts = new List<DADInt>();
 
 
         //LM ID, Client
-        public Dictionary<string, LeaseManagerService.LeaseManagerServiceClient> _lmsClients
-            = new Dictionary<string, LeaseManagerService.LeaseManagerServiceClient>();
+        public Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient> _lmsClients
+            = new Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient>();
 
         //TM ID, Client
         public Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> _tmsClients
             = new Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient>();
 
+        public CrossTMClientService crossTmClientService;
         public void createConnectionsToLms()
             {
                 // Create connections to other Transmissions Managers
                 foreach (var lm in _lms)
                 {
                     GrpcChannel channel = GrpcChannel.ForAddress(lm.Item2);
-                    var client = new LeaseManagerService.LeaseManagerServiceClient(channel);
+                    var client = new PaxosCommunicationService.PaxosCommunicationServiceClient(channel);
                     _lmsClients.Add(lm.Item1, client);
                 }
             }
@@ -84,13 +94,15 @@ namespace DADTKV.transactionManager
         public void Start()
         {
             // Create Server
+            crossTmClientService = new CrossTMClientService(this);
+
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
             {
                 Services = {
-                    CrossServerTransactionManagerService.BindService(new CrossTMService(this)),
+                    CrossServerTransactionManagerService.BindService(new CrossTMServerService(this)),
                     ClientServerService.BindService(new ClientService(this)),
-                    LeaseManagerServicing.BindService(new LeaseManagerServicings(this)),
+                    LMTMCommunicationService.BindService(new LeaseManagerServicings(this)),
                 },
                 Ports = { serverPort }
             };

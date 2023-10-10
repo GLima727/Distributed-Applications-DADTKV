@@ -42,7 +42,9 @@ namespace DADTKV.transactionManager
 
         public static void UrlReader(string arg, TransactionManager tm)
         {
-            tm.Url = arg;
+            Uri uri = new Uri(arg);
+            tm.Port = uri.Port;
+            tm.Url = uri.Host;
         }
 
         public static void TimeSlotReader(string arg, TransactionManager tm)

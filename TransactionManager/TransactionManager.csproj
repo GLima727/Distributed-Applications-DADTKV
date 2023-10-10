@@ -9,6 +9,9 @@
 
   <ItemGroup>
     <None Remove="protos\DADTKVLeaseManagerServer.proto" />
+    <None Remove="protos\lease_m_transaction_m_communication.proto" />
+    <None Remove="protos\lease_sheet_definitions.proto" />
+    <None Remove="protos\paxos_communication.proto" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,8 +27,9 @@
   <ItemGroup>
 	      <Protobuf Include="protos\DADTKVClient.proto" GrpcServices="Server" />
 	  <Protobuf Include="protos\DADTKVCrossTransactionManager.proto" GrpcServices="Both" />
-	  <Protobuf Include="protos\DADTKVLeaseManagerServer.proto" GrpcServices="Client" />
-	  <Protobuf Include="protos\DADTKVLeaseManager.proto" GrpcServices="Server" />
+	  <Protobuf Include="protos\lease_m_transaction_m_communication.proto" GrpcServices="Server" />
+	  <Protobuf Include="protos\lease_sheet_definitions.proto" />
+	  <Protobuf Include="protos\paxos_communication.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
