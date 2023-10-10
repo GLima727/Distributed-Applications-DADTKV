@@ -38,12 +38,11 @@ namespace DADTKV.leaseManager
         // Private only atributtes
         private int _leaderId = -1;
 
-        private Dictionary<string, PaxosServerService.PaxosServerServiceClient> _lmsClients =
-            new Dictionary<string, PaxosServerService.PaxosServerServiceClient>();
+        private Dictionary<string, PaxosCommunicaitonService.PaxosCommunicaitonServiceClient> _lmsClients =
+            new Dictionary<string, PaxosCommunicaitonService.PaxosCommunicaitonServiceClient>();
 
-
-        private List<LeaseManagerService.LeaseManagerServiceClient> _tmsClients =
-            new List<LeaseManagerService.LeaseManagerServiceClient>();
+        private List<LMTMCommunicationService.LMTMCommunicationServiceClient> _tmsClients =
+            new List<LMTMCommunicationService.LMTMCommunicationServiceClient>();
 
         public LeaseManager() { }
 
@@ -55,7 +54,7 @@ namespace DADTKV.leaseManager
                 if (_lms[i].Item1 != _id)
                 {
                     GrpcChannel channel = GrpcChannel.ForAddress(_lms[i].Item2);
-                    var client = new PaxosServerService.PaxosServerServiceClient(channel);
+                    var client = new PaxosCommunicaitonService.PaxosCommunicaitonServiceClient(channel);
                     _lmsClients[_lms[i].Item1] = client;
                 }
                 else
@@ -71,7 +70,7 @@ namespace DADTKV.leaseManager
             foreach (var tm in _tms)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(tm.Item2);
-                var client = new LeaseManagerService.LeaseManagerServiceClient(channel);
+                var client = new LMTMCommunicationService.LMTMCommunicationServiceClient(channel);
                 _tmsClients.Add(client);
             }
         }
@@ -94,8 +93,8 @@ namespace DADTKV.leaseManager
             Server server = new Server
             {
                 Services = {
-                    PaxosServerService.BindService(new PaxosService(this)),
-                    LeaseManagerServie.BindService(new ManagerService(this))
+                    PaxosCommunicaitonService.BindService(new PaxosService(this)),
+                    LMTMCommunicationService.BindService(new LMTMService(this))
                 },
                 Ports = { serverPort }
             };
