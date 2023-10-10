@@ -1,4 +1,7 @@
-﻿namespace DADTKV.transactionManager
+﻿using Grpc.Core;
+using Grpc.Net.Client;
+
+namespace DADTKV.transactionManager
 {
     class TransactionManager
     {
@@ -7,6 +10,8 @@
 
         private string _url = "";
         public string Url { get { return _url; } set { _url = value; } }
+
+        private int _port = 0;
 
         private int _timeSlot = 0;
         public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
@@ -29,8 +34,72 @@
         private List<Tuple<int, string>> _susList = new List<Tuple<int, string>>();
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
-        public TransactionManager() {
+        public List<string> leasesMissing = new List<string>();
 
+        public List<string> leaseList = new List<string>();
+
+
+
+        //LM ID, Client
+        public Dictionary<string, LeaseManagerService.LeaseManagerServiceClient> _lmsClients
+            = new Dictionary<string, LeaseManagerService.LeaseManagerServiceClient>();
+
+        //TM ID, Client
+        public Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> _tmsClients
+            = new Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient>();
+
+        public void createConnectionsToLms()
+            {
+                // Create connections to other Transmissions Managers
+                foreach (var lm in _lms)
+                {
+                    GrpcChannel channel = GrpcChannel.ForAddress(lm.Item2);
+                    var client = new LeaseManagerService.LeaseManagerServiceClient(channel);
+                    _lmsClients.Add(lm.Item1, client);
+                }
+            }
+
+        public void createConnectionsToTms()
+        {
+            // Create connections to other Transmissions Managers
+            foreach (var tm in _tms)
+            {
+                GrpcChannel channel = GrpcChannel.ForAddress(tm.Item2);
+                var client = new CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient(channel);
+                _tmsClients.Add(tm.Item1, client);
+            }
+        }
+
+        public void WaitForStartTime()
+        {
+            DateTime startTime = DateTime.ParseExact(TimeStart, "HH:mm:ss", null);
+
+            while (DateTime.Now < startTime)
+            {
+                // Wait for a short period of time before checking again
+                System.Threading.Thread.Sleep(1000); // Sleep for 1 second (adjust as needed)
+            }
+        }
+
+        public void Start()
+        {
+            // Create Server
+            ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
+            Server server = new Server
+            {
+                Services = {
+                    CrossServerTransactionManagerService.BindService(new CrossTMService(this)),
+                    ClientServerService.BindService(new ClientService(this))
+                },
+                Ports = { serverPort }
+            };
+
+            server.Start();
+
+            createConnectionsToLms();
+            createConnectionsToTms();
+
+            while (true) ;
         }
     }
 }

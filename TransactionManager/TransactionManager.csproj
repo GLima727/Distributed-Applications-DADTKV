@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="protos\DADTKVLeaseManagerServer.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.24.4" />
     <PackageReference Include="Grpc.Core" Version="2.46.6" />
     <PackageReference Include="Grpc.Net.Client" Version="2.57.0" />
@@ -15,6 +19,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+	      <Protobuf Include="protos\DADTKVClient.proto" GrpcServices="Server" />
+	  <Protobuf Include="protos\DADTKVCrossTransactionManager.proto" GrpcServices="Both" />
+	  <Protobuf Include="protos\DADTKVLeaseManagerServer.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
