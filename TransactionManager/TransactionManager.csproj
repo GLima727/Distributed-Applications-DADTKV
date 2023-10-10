@@ -25,6 +25,7 @@
 	      <Protobuf Include="protos\DADTKVClient.proto" GrpcServices="Server" />
 	  <Protobuf Include="protos\DADTKVCrossTransactionManager.proto" GrpcServices="Both" />
 	  <Protobuf Include="protos\DADTKVLeaseManagerServer.proto" GrpcServices="Client" />
+	  <Protobuf Include="protos\DADTKVLeaseManager.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>

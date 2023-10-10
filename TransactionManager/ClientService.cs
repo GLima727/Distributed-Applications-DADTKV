@@ -46,7 +46,7 @@ namespace DADTKV.transactionManager
             //send lms for the lease sheet
             RequestLeases();
 
-
+            //receive leasesheet
 
             return reply;
         }
@@ -62,6 +62,29 @@ namespace DADTKV.transactionManager
                 paxos.Value.RequestLease(requestLease);
             }
         }
+
+        //public Dictionary<string, List<string>> lookAheadLeases(LeaseSheet leaseSheet)
+        //{
+        //    Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
+        //    foreach (string lease in leaseSheet.GetLeases())
+        //    {
+        //        for (int i = leaseSheet.GetOrder() + 1; i < leaseSheet.leases.Count; i++)
+        //        {
+
+        //            if ( != selfTmId && TransactionManager.leaseSheets[i].GetLeases().Contains(lease))
+        //            {
+        //                if (leasesToSend.ContainsKey(TransactionManager.leaseSheets[i].GetTmID()))
+        //                {
+        //                    leasesToSend[TransactionManager.leaseSheets[i].GetTmID()].Add(lease);
+        //                }
+
+        //                break;
+        //            }
+        //        }
+
+        //    }
+        //    return leasesToSend;
+        //}
 
     }
 }
