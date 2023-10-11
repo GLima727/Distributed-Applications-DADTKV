@@ -18,7 +18,8 @@
                     }
                 }
             }
-
+            
+            DebugClass.IsEnabled = true;
             lm.Start();
         }
     }

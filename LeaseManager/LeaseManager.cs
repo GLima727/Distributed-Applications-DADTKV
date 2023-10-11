@@ -158,7 +158,7 @@ namespace DADTKV.leaseManager
             while (DateTime.Now < startTime)
             {
                 // Wait for a short period of time before checking again
-                System.Threading.Thread.Sleep(1000); // Sleep for 1 second (adjust as needed)
+                System.Threading.Thread.Sleep(100); // Sleep for 1 second (adjust as needed)
             }
         }
 
@@ -167,6 +167,7 @@ namespace DADTKV.leaseManager
         /// </summary>
         public void Start()
         {
+            DebugClass.Log($"Start Lease Manager {_id}.");
             // Create Server 
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
@@ -180,10 +181,15 @@ namespace DADTKV.leaseManager
 
             server.Start();
 
+            DebugClass.Log("Set connections to another LMs.");
             createConnectionsToLms();
+            DebugClass.Log("Set connections to TMs.");
             createConnectionsToTms();
 
+
+            DebugClass.Log("Waiting for wall time.");
             WaitForStartTime();
+            DebugClass.Log("Wall time completed.");
 
             while (true) ;
         }

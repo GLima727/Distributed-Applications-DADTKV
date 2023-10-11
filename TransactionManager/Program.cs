@@ -18,8 +18,9 @@
                     }
                 }
             }
-
-            Console.WriteLine(tm.Id);
+            
+            DebugClass.IsEnabled = true;
+            tm.Start();
         }
     }
 }

@@ -154,10 +154,10 @@ namespace DADTKV.initializer
                 proc.TimeStart = timeStart;
             }
 
-            foreach (var proc in processes)
-                Console.WriteLine(proc.GetProcessArgs());
-            foreach (var proc in processes)
+            foreach (var proc in processes) {
+                Thread.Sleep(200);
                 Process.Start(proc.GetProcessStartInfo(os));
+            }
         }
     }
 }

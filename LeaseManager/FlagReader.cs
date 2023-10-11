@@ -34,8 +34,6 @@ namespace DADTKV.leaseManager
             {
                 throw new Exception("The url is invalid!");
             }
-
-            lm.Url = arg;
         }
 
         public static void TimeSlotReader(string arg, LeaseManager lm)

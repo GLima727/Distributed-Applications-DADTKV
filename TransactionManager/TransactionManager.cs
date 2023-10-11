@@ -71,21 +71,21 @@ namespace DADTKV.transactionManager
 
         private CrossTMClientService _crossTmClientService;
 
-        public CrossTMClientService CrossTMClientService { get { return _crossTmClientService;} set { _crossTmClientService = value; }  }
+        public CrossTMClientService CrossTMClientService { get { return _crossTmClientService; } set { _crossTmClientService = value; } }
 
-        private TMLMService _tMLMService; 
+        private TMLMService _tMLMService;
 
-        public TMLMService TMLMService { get { return _tMLMService;} set { _tMLMService = value; } }
+        public TMLMService TMLMService { get { return _tMLMService; } set { _tMLMService = value; } }
         public void createConnectionsToLms()
+        {
+            // Create connections to other Transmissions Managers
+            foreach (var lm in Lms)
             {
-                // Create connections to other Transmissions Managers
-                foreach (var lm in Lms)
-                {
-                    GrpcChannel channel = GrpcChannel.ForAddress(lm.Item2);
-                    var client = new LMTMCommunicationService.LMTMCommunicationServiceClient(channel);
-                    LmsClients.Add(lm.Item1, client);
-                }
+                GrpcChannel channel = GrpcChannel.ForAddress(lm.Item2);
+                var client = new LMTMCommunicationService.LMTMCommunicationServiceClient(channel);
+                LmsClients.Add(lm.Item1, client);
             }
+        }
 
         public void createConnectionsToTms()
         {
@@ -111,6 +111,8 @@ namespace DADTKV.transactionManager
 
         public void Start()
         {
+            DebugClass.Log($"Start Transaction Manager {_id}.");
+
             // Create Server
             CrossTMClientService = new CrossTMClientService(this);
             TMLMService = new TMLMService(this);
@@ -127,9 +129,14 @@ namespace DADTKV.transactionManager
             };
 
             server.Start();
-
+            DebugClass.Log("Set connections to another LMs.");
             createConnectionsToLms();
+            DebugClass.Log("Set connections to TMs.");
             createConnectionsToTms();
+
+            DebugClass.Log("Waiting for wall time.");
+            WaitForStartTime();
+            DebugClass.Log("Wall time completed.");
 
             while (true) ;
         }
