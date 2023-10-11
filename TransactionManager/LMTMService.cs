@@ -2,11 +2,11 @@
 
 namespace DADTKV.transactionManager
 {
-    class LeaseManagerServicings : LMTMCommunicationService.LMTMCommunicationServiceBase
+    class LMTMService : LMTMCommunicationService.LMTMCommunicationServiceBase
     { 
         private TransactionManager _transactionManager;
 
-        public LeaseManagerServicings(TransactionManager transactionManager)
+        public LMTMService(TransactionManager transactionManager)
         {
             _transactionManager = transactionManager;
         }
@@ -18,7 +18,7 @@ namespace DADTKV.transactionManager
 
         public LeaseSheetResponse GetLeaseSheetImpl(LeaseSheetRequest request)
         {
-            _transactionManager.leaseSheets = new List<LeaseSheet>();
+            _transactionManager.LeaseSheets = new List<LeaseSheet>();
             int count = 0;
             foreach (Lease lease in request.LeaseSheet)
             {
@@ -27,9 +27,9 @@ namespace DADTKV.transactionManager
                 leaseSheet.order = count++;
 
                 leaseSheet.leases = new List<string>(lease.Leases);
-                _transactionManager.leaseSheets.Add(leaseSheet);
+                _transactionManager.LeaseSheets.Add(leaseSheet);
             }
-            _transactionManager.signal.Set();
+            _transactionManager.Signal.Set();
 
             return new LeaseSheetResponse();
         }

@@ -22,18 +22,22 @@ namespace DADTKV.client
 
         public Client() {}
 
-        public List<ClientServerService.ClientServerServiceClient> _tmsChannels
+        private List<ClientServerService.ClientServerServiceClient> _tmsChannels
             = new List<ClientServerService.ClientServerServiceClient>();
+
+        public List<ClientServerService.ClientServerServiceClient> TmsChannels { get { return _tmsChannels; } }
+
+
 
         public void createConnectionsToTms()
         {
             // Create connections to other Transmissions Managers
-            foreach (var tm in _tms)
+            foreach (var tm in Tms)
             {
                 Console.WriteLine("ola");
                 GrpcChannel channel = GrpcChannel.ForAddress(tm);
                 var tmChannel = new ClientServerService.ClientServerServiceClient(channel);
-                _tmsChannels.Add(tmChannel);
+                TmsChannels.Add(tmChannel);
             }
         }
 
@@ -85,9 +89,11 @@ namespace DADTKV.client
 
             createConnectionsToTms();
 
-            ParseAndExecuteCommands(clientServer);
+            while (true)
+            {
+                ParseAndExecuteCommands(clientServer);
+            }
             
-
         }
     }
 }

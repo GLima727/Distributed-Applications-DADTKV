@@ -21,8 +21,8 @@ namespace DADTKV.client
         public ClientServerService.ClientServerServiceClient GetTransactionManager()
         {
             Random rnd = new Random();
-            int number = rnd.Next(0, _client._tmsChannels.Count);
-            return _client._tmsChannels[number];
+            int number = rnd.Next(0, _client.TmsChannels.Count);
+            return _client.TmsChannels[number];
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace DADTKV.client
         {
             ClientStatusRequest statusRequest = new ClientStatusRequest();
 
-            foreach (ClientServerService.ClientServerServiceClient tm in _client._tmsChannels)
+            foreach (ClientServerService.ClientServerServiceClient tm in _client.TmsChannels)
             {
                 tm.Status(statusRequest);
             }

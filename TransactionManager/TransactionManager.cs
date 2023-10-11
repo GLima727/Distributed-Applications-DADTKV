@@ -6,12 +6,12 @@ namespace DADTKV.transactionManager
     class TransactionManager
     {
         private string _id = "";
-        public string Id { get { return _id; } set { _id = value; }}
+        public string Id { get { return _id; } set { _id = value; } }
 
         private string _url = "";
         public string Url { get { return _url; } set { _url = value; } }
 
-        private int _port = 0; 
+        private int _port = 0;
 
         public int Port { get { return _port; } set { _port = value; } }
 
@@ -36,47 +36,65 @@ namespace DADTKV.transactionManager
         private List<Tuple<int, string>> _susList = new List<Tuple<int, string>>();
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
-        public List<string> leasesMissing = new List<string>();
+        private List<string> _leasesMissing = new List<string>();
 
-        public List<string> leaseList = new List<string>();
+        public List<string> LeasesMissing { get { return _leasesMissing; } set { _leasesMissing = value; } }
 
-        public List<LeaseSheet> leaseSheets = new List<LeaseSheet>();
+        private List<string> _leaseList = new List<string>();
 
-        public ManualResetEventSlim signal = new ManualResetEventSlim(false);
+        public List<string> LeaseList { get { return _leaseList; } set { _leaseList = value; } }
 
-        public Dictionary<string, ManualResetEventSlim> transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
+        private List<LeaseSheet> _leaseSheets = new List<LeaseSheet>();
+        public List<LeaseSheet> LeaseSheets { get { return _leaseSheets; } set { _leaseSheets = value; } }
 
-        public List<DADInt> dadInts = new List<DADInt>();
+        private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
+        public ManualResetEventSlim Signal { get { return _signal; } }
 
+        private Dictionary<string, ManualResetEventSlim> _transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
+
+        public Dictionary<string, ManualResetEventSlim> TransactionManagerSignals { get { return _transactionManagerSignals; } }
+
+        private List<DADInt> _dadInts = new List<DADInt>();
+        public List<DADInt> DadInts { get { return _dadInts; } set { _dadInts = value; } }
 
         //LM ID, Client
-        public Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient> _lmsClients
-            = new Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient>();
+        private Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> _lmsClients
+            = new Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient>();
+
+        public Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> LmsClients { get { return _lmsClients; } set { _lmsClients = value; } }
 
         //TM ID, Client
-        public Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> _tmsClients
+        private Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> _tmsClients
             = new Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient>();
 
-        public CrossTMClientService crossTmClientService;
+        public Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> TmsClients { get { return _tmsClients; } set { _tmsClients = value; } }
+
+        private CrossTMClientService _crossTmClientService;
+
+        public CrossTMClientService CrossTMClientService { get { return _crossTmClientService;} set { _crossTmClientService = value; }  }
+
+        private TMLMService _tMLMService; 
+
+        public TMLMService TMLMService { get { return _tMLMService;} set { _tMLMService = value; } }
         public void createConnectionsToLms()
             {
                 // Create connections to other Transmissions Managers
-                foreach (var lm in _lms)
+                foreach (var lm in Lms)
                 {
                     GrpcChannel channel = GrpcChannel.ForAddress(lm.Item2);
-                    var client = new PaxosCommunicationService.PaxosCommunicationServiceClient(channel);
-                    _lmsClients.Add(lm.Item1, client);
+                    var client = new LMTMCommunicationService.LMTMCommunicationServiceClient(channel);
+                    LmsClients.Add(lm.Item1, client);
                 }
             }
 
         public void createConnectionsToTms()
         {
             // Create connections to other Transmissions Managers
-            foreach (var tm in _tms)
+            foreach (var tm in Tms)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(tm.Item2);
                 var client = new CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient(channel);
-                _tmsClients.Add(tm.Item1, client);
+                TmsClients.Add(tm.Item1, client);
             }
         }
 
@@ -94,7 +112,8 @@ namespace DADTKV.transactionManager
         public void Start()
         {
             // Create Server
-            crossTmClientService = new CrossTMClientService(this);
+            CrossTMClientService = new CrossTMClientService(this);
+            TMLMService = new TMLMService(this);
 
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
@@ -102,7 +121,7 @@ namespace DADTKV.transactionManager
                 Services = {
                     CrossServerTransactionManagerService.BindService(new CrossTMServerService(this)),
                     ClientServerService.BindService(new ClientService(this)),
-                    LMTMCommunicationService.BindService(new LeaseManagerServicings(this)),
+                    LMTMCommunicationService.BindService(new LMTMService(this)),
                 },
                 Ports = { serverPort }
             };

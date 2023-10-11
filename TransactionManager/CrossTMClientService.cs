@@ -16,7 +16,7 @@ namespace DADTKV.transactionManager
             PropagateLeasesRequest request = new PropagateLeasesRequest();
             request.Leases.AddRange(leases);
 
-            _transactionManager._tmsClients[tmID].PropagateLeases(request);
+            _transactionManager.TmsClients[tmID].PropagateLeases(request);
         }
     }
 }

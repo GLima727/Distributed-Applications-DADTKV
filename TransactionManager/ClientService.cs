@@ -26,29 +26,29 @@ namespace DADTKV.transactionManager
             foreach (string readOp in request.ReadOperations)
             {
 
-                if (!_transactionManager.leaseList.Contains(readOp))    
+                if (!_transactionManager.LeaseList.Contains(readOp))    
                 {
-                    _transactionManager.leasesMissing.Add(readOp);
+                    _transactionManager.LeasesMissing.Add(readOp);
                 }
 
             }
 
             foreach (DADInt dadInt in request.WriteOperations)
             {
-                if (!_transactionManager.leaseList.Contains(dadInt.Key))
+                if (!_transactionManager.LeaseList.Contains(dadInt.Key))
                 {
-                    _transactionManager.leasesMissing.Add(dadInt.Key);
+                    _transactionManager.LeasesMissing.Add(dadInt.Key);
                 }
             }
 
             //send lms for the lease sheet
-            RequestLeases();
+            _transactionManager.TMLMService.RequestLeases();
 
             //receive leasesheet
-            _transactionManager.signal.Wait();
-            _transactionManager.signal.Reset();
+            _transactionManager.Signal.Wait();
+            _transactionManager.Signal.Reset();
 
-            foreach (LeaseSheet leaseSheet in _transactionManager.leaseSheets)
+            foreach (LeaseSheet leaseSheet in _transactionManager.LeaseSheets)
             {
                 if (leaseSheet.GetTmID() == _transactionManager.Id)
                 {
@@ -61,23 +61,23 @@ namespace DADTKV.transactionManager
                     {
                         //lookback
                         lookBackLeases(leaseSheet);
-                        _transactionManager.transactionManagerSignals[_transactionManager.Id].Wait();
-                        _transactionManager.transactionManagerSignals[_transactionManager.Id].Reset();
+                        _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
+                        _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
 
                         //execute transaction
-                        //reply = executeOperations(request);
+                        reply = executeOperations(request);
                     }
                     //lookahead
 
                     Dictionary<string, List<string>> leasesToSend = lookAheadLeases(leaseSheet);
                     foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
                     {
-                        _transactionManager.crossTmClientService.PropagateLease(leases.Key, leases.Value);
+                        _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
 
                         // remove A from ("A","B") and so on
                         foreach (string lease in leases.Value)
                         {
-                            _transactionManager.leaseList.Remove(lease);
+                            _transactionManager.LeaseList.Remove(lease);
 
                         }
                     }
@@ -88,30 +88,18 @@ namespace DADTKV.transactionManager
             return reply;
         }
 
-
-        public void RequestLeases()
-        {
-            RequestLeaseRequest requestLease = new RequestLeaseRequest();
-            requestLease.Leases.AddRange(_transactionManager.leasesMissing);
-
-            foreach (var paxos in _transactionManager._lmsClients)
-            {
-                paxos.Value.RequestLease(requestLease);
-            }
-        }
-
         public Dictionary<string, List<string>> lookAheadLeases(LeaseSheet currentLease)
         {
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
             foreach (string lease in currentLease.GetLeases())
             {
-                for (int i = currentLease.GetOrder() + 1; i < _transactionManager.leaseSheets.Count; i++)
+                for (int i = currentLease.GetOrder() + 1; i < _transactionManager.LeaseSheets.Count; i++)
                 {
 
-                    if ( _transactionManager.leaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.leaseSheets[i].GetLeases().Contains(lease))
+                    if ( _transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
                     {
                         //atencao verificar se ele nao esta a criar ids repetidos no dicionario
-                        leasesToSend[_transactionManager.leaseSheets[i].GetTmID()].Add(lease);
+                        leasesToSend[_transactionManager.LeaseSheets[i].GetTmID()].Add(lease);
                         break;
                     }
                 }
@@ -127,13 +115,13 @@ namespace DADTKV.transactionManager
                 List<string> leases = new List<string>();
                 for (int i = leaseSheet.GetOrder() - 1; i >= 0; i--)
                 {
-                    if (_transactionManager.leaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.leaseSheets[i].GetLeases().Contains(lease))
+                    if (_transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
                     {
                         leases.Add(lease);
                         break;
                     }
                 }
-                _transactionManager.leasesMissing = leases;
+                _transactionManager.LeasesMissing = leases;
             }
         }
 
@@ -142,7 +130,7 @@ namespace DADTKV.transactionManager
             ClientTransactionReply reply = new ClientTransactionReply();
             foreach (string readOp in request.ReadOperations)
             {
-                foreach (DADInt memDadInt in _transactionManager.dadInts)
+                foreach (DADInt memDadInt in _transactionManager.DadInts)
                 {
                     if (memDadInt.Key == readOp)
                     {
@@ -153,7 +141,7 @@ namespace DADTKV.transactionManager
 
             foreach (DADInt dadInt in request.WriteOperations)
             {
-                foreach (DADInt memDadInt in _transactionManager.dadInts)
+                foreach (DADInt memDadInt in _transactionManager.DadInts)
                 {
                     if (memDadInt.Key == dadInt.Key)
                     {

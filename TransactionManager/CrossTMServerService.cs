@@ -20,11 +20,11 @@ namespace DADTKV.transactionManager
         {
             foreach (string lease in request.Leases)
             {
-                _transactionManager.leasesMissing.Remove(lease);
+                _transactionManager.LeasesMissing.Remove(lease);
             }
-            if (_transactionManager.leasesMissing.Count == 0)
+            if (_transactionManager.LeasesMissing.Count == 0)
             {
-                _transactionManager.transactionManagerSignals[_transactionManager.Id].Set();
+                _transactionManager.TransactionManagerSignals[_transactionManager.Id].Set();
             }
 
 
