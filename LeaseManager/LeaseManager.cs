@@ -3,49 +3,110 @@ using Grpc.Net.Client;
 
 namespace DADTKV.leaseManager
 {
+    /// <summary>
+    /// This class represents a Lease Manager, responsible for managing leases in the system.
+    /// </summary>
     class LeaseManager
     {
+        /// <summary>
+        /// Gets or sets the unique identifier for this Lease Manager instance.
+        /// </summary>
         private string _id = "";
         public string Id { get { return _id; } set { _id = value; } }
 
+        /// <summary>
+        /// Gets or sets the URL of the Lease Manager.
+        /// </summary>
         private string _url = "";
         public string Url { get { return _url; } set { _url = value; } }
 
+        /// <summary>
+        /// Gets or sets the port number for communication.
+        /// </summary>
         private int _port = 0;
         public int Port { get { return _port; } set { _port = value; } }
 
+        /// <summary>
+        /// Gets or sets the time slot for lease management.
+        /// </summary>
         private int _timeSlot = 0;
         public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
 
+        /// <summary>
+        /// Gets or sets the number of slots.
+        /// </summary>
         private int _numSlot = 0;
         public int NumSlot { get { return _numSlot; } set { _numSlot = value; } }
 
+        /// <summary>
+        /// Gets or sets the list of round downs.
+        /// </summary>
         private List<int> _roundsDowns = new List<int>();
         public List<int> RoundsDowns { get { return _roundsDowns; } set { _roundsDowns = value; } }
 
+        /// <summary>
+        /// Gets or sets the start time for lease management.
+        /// </summary>
         private string _timeStart = "";
         public string TimeStart { get { return _timeStart; } set { _timeStart = value; } }
 
+        /// <summary>
+        /// Gets or sets the list of Transmission Managers (TMs).
+        /// </summary>
         private List<Tuple<string, string>> _tms = new List<Tuple<string, string>>();
         public List<Tuple<string, string>> Tms { get { return _tms; } set { _tms = value; } }
 
+        /// <summary>
+        /// Gets or sets the list of Lease Managers (LMs).
+        /// </summary>
         private List<Tuple<string, string>> _lms = new List<Tuple<string, string>>();
         public List<Tuple<string, string>> Lms { get { return _lms; } set { _lms = value; } }
 
+        /// <summary>
+        /// Gets or sets the list of suspended leases.
+        /// </summary>
         private List<Tuple<int, string>> _susList = new List<Tuple<int, string>>();
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
-        // Private only atributtes
+        /// <summary>
+        /// Gets the leader ID.
+        /// </summary>
+        /// <remarks>
+        /// This is a private attribute used internally.
+        /// </remarks>
         private int _leaderId = -1;
 
+        /// <summary>
+        /// Dictionary containing connections to other Lease Managers (LMs).
+        /// </summary>
+        /// <remarks>
+        /// Key: LM ID, Value: Grpc Client.
+        /// </remarks>
         private Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient> _lmsClients =
             new Dictionary<string, PaxosCommunicationService.PaxosCommunicationServiceClient>();
 
+        /// <summary>
+        /// List of connections to Transmission Managers (TMs).
+        /// </summary>
         private List<LMTMCommunicationService.LMTMCommunicationServiceClient> _tmsClients =
             new List<LMTMCommunicationService.LMTMCommunicationServiceClient>();
 
+        /// <summary>
+        /// Current round number.
+        /// </summary>
+        /// <remarks>
+        /// This is a private attribute used internally.
+        /// </remarks>
+        private int _current_round = 0;
+
+        /// <summary>
+        /// Default constructor for Lease Manager.
+        /// </summary>
         public LeaseManager() { }
 
+        /// <summary>
+        /// Creates connections to other Lease Managers (LMs).
+        /// </summary>
         private void createConnectionsToLms()
         {
             // Create connections to other Lease Managers
@@ -64,7 +125,19 @@ namespace DADTKV.leaseManager
             }
         }
 
-        public void createConnectionsToTms()
+        /// <summary>
+        /// Checks if the Lease Manager has crashed.
+        /// </summary>
+        /// <returns>True if crashed, otherwise false.</returns>
+        private bool hasCrashed()
+        {
+            return _roundsDowns.Contains(_current_round);
+        }
+
+        /// <summary>
+        /// Creates connections to other Transmission Managers (TMs).
+        /// </summary>
+        private void createConnectionsToTms()
         {
             // Create connections to other Transmissions Managers
             foreach (var tm in _tms)
@@ -75,7 +148,10 @@ namespace DADTKV.leaseManager
             }
         }
 
-        public void WaitForStartTime()
+        /// <summary>
+        /// Waits for the specified start time.
+        /// </summary>
+        private void WaitForStartTime()
         {
             DateTime startTime = DateTime.ParseExact(TimeStart, "HH:mm:ss", null);
 
@@ -86,6 +162,9 @@ namespace DADTKV.leaseManager
             }
         }
 
+        /// <summary>
+        /// Starts the Lease Manager.
+        /// </summary>
         public void Start()
         {
             // Create Server 
@@ -94,7 +173,7 @@ namespace DADTKV.leaseManager
             {
                 Services = {
                     PaxosCommunicationService.BindService(new PaxosService(this)),
-                    LMTMCommunicationService.BindService(new (this))
+                    LMTMCommunicationService.BindService(new LMTMService(this))
                 },
                 Ports = { serverPort }
             };
@@ -104,7 +183,10 @@ namespace DADTKV.leaseManager
             createConnectionsToLms();
             createConnectionsToTms();
 
+            WaitForStartTime();
+
             while (true) ;
         }
     }
 }
+

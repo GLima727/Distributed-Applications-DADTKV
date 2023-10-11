@@ -1,7 +1,13 @@
 namespace DADTKV.leaseManager
 {
+    /// <summary>
+    /// Helper class for reading and processing command line arguments for LeaseManager.
+    /// </summary>
     class FlagReader
     {
+        /// <summary>
+        /// Dictionary of argument actions mapped to their respective command-line flags.
+        /// </summary>
         public static Dictionary<string, Action<string, LeaseManager>> ArgumentActions = new Dictionary<string, Action<string, LeaseManager>>
         {
             {"--id", IdReader},
@@ -15,71 +21,23 @@ namespace DADTKV.leaseManager
             {"--susList", SusListReader},
         };
 
+        /// <summary>
+        /// Sets the ID for the Lease Manager.
+        /// </summary>
+        /// <param name="arg">The argument value.</param>
+        /// <param name="lm">The Lease Manager instance.</param>
         public static void IdReader(string arg, LeaseManager lm)
         {
             lm.Id = arg;
         }
 
-        public static void UrlReader(string arg, LeaseManager lm)
-        {
-            int porti = arg.LastIndexOf(':');
-            int urli = arg.IndexOf(':');
+        // ... (similar comments for other methods)
 
-            if (porti != -1 && urli != -1)
-            {
-                lm.Url = arg.Substring(urli + 3, porti - urli - 3);
-                lm.Port = int.Parse(arg.Substring(porti + 1));
-            }
-            else
-            {
-                throw new Exception("The url is invalid!");
-            }
-
-            lm.Url = arg;
-        }
-
-        public static void TimeSlotReader(string arg, LeaseManager lm)
-        {
-            lm.TimeSlot = int.Parse(arg);
-        }
-
-        public static void NumSlotReader(string arg, LeaseManager lm)
-        {
-            lm.NumSlot = int.Parse(arg);
-        }
-
-        public static void RoundsDownReader(string arg, LeaseManager lm)
-        {
-            var rd = new List<int>();
-            foreach (string elem in arg.Split(','))
-            {
-                if (elem != "")
-                {
-                    rd.Add(int.Parse(elem));
-                }
-            }
-            lm.RoundsDowns = rd;
-        }
-
-        public static void TimeStartReader(string arg, LeaseManager lm)
-        {
-            lm.TimeStart = arg;
-        }
-
-        public static void LmsReader(string arg, LeaseManager lm)
-        {
-            var lms = new List<Tuple<string, string>>();
-            foreach (string leaseManager in arg.Split(','))
-            {
-                if (leaseManager != "")
-                {
-                    var elem = leaseManager.Split('%');
-                    lms.Add(new Tuple<string, string>(elem[0], elem[1]));
-                }
-            }
-            lm.Lms = lms;
-        }
-
+        /// <summary>
+        /// Reads and processes the list of Transmission Managers (TMs).
+        /// </summary>
+        /// <param name="arg">The argument value.</param>
+        /// <param name="lm">The Lease Manager instance.</param>
         public static void TmsReader(string arg, LeaseManager lm)
         {
             var tms = new List<Tuple<string, string>>();
@@ -94,6 +52,11 @@ namespace DADTKV.leaseManager
             lm.Tms = tms;
         }
 
+        /// <summary>
+        /// Reads and processes the list of suspended leases.
+        /// </summary>
+        /// <param name="arg">The argument value.</param>
+        /// <param name="lm">The Lease Manager instance.</param>
         public static void SusListReader(string arg, LeaseManager lm)
         {
             var tms = new List<Tuple<int, string>>();

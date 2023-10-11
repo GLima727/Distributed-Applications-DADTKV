@@ -1,5 +1,3 @@
-using Grpc.Core;
-
 namespace DADTKV.leaseManager
 {
     class PaxosService : PaxosCommunicationService.PaxosCommunicationServiceBase
