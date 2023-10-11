@@ -22,8 +22,8 @@ namespace DADTKV.transactionManager
             _transactionManager.LeaseSheets = new List<LeaseSheet>();
             int count = 0;
             DebugClass.Log(request.LeaseSheet.LeaseSheet_.Count().ToString());
-            /*
-            foreach (Lease lease in request.LeaseSheet)
+            
+            foreach (Lease lease in request.LeaseSheet.LeaseSheet_)
             {
                 DebugClass.Log(lease.Leases.Count().ToString());
                 foreach (var content in lease.Leases) {
@@ -37,7 +37,7 @@ namespace DADTKV.transactionManager
                 _transactionManager.LeaseSheets.Add(leaseSheet);
             }
             _transactionManager.Signal.Set();
-            */
+            
 
             return new LeaseSheetResponse();
         }

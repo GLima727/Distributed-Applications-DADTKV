@@ -64,10 +64,10 @@ namespace DADTKV.transactionManager
         public Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> LmsClients { get { return _lmsClients; } set { _lmsClients = value; } }
 
         //TM ID, Client
-        private Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> _tmsClients
-            = new Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient>();
+        private Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> _tmsClients
+            = new Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>>();
 
-        public Dictionary<string, CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient> TmsClients { get { return _tmsClients; } set { _tmsClients = value; } }
+        public Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> TmsClients { get { return _tmsClients; } set { _tmsClients = value; } }
 
         private CrossTMClientService _crossTmClientService;
 
@@ -94,7 +94,11 @@ namespace DADTKV.transactionManager
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(tm.Item2);
                 var client = new CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient(channel);
-                TmsClients.Add(tm.Item1, client);
+
+                Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple 
+                    = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> (client, RoundsDowns);
+
+                TmsClients.Add(tm.Item1, tuple);
             }
         }
 

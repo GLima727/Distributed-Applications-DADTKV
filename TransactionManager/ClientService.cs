@@ -72,6 +72,15 @@ namespace DADTKV.transactionManager
                     Dictionary<string, List<string>> leasesToSend = lookAheadLeases(leaseSheet);
                     foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
                     {
+                        //check if tm suspects tm he is sending to
+                        foreach(var suspicion in _transactionManager.SusList)
+                        {
+                            //if the suspicion is in the current time check for id
+                            if(suspicion.Item1 == _transactionManager.TimeSlot)
+                            {
+
+                            }
+                        }
                         _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
 
                         // remove A from ("A","B") and so on
