@@ -13,6 +13,6 @@ message LeaseSheetRequest { LeaseSheet lease_sheet = 1; }
 message LeaseSheetResponse {}
 
 service LMTMCommunicationService {
-  rpc GetLeaseSheet(LeaseSheetRequest) returns (LeaseSheetResponse);
   rpc ProcessLeaseRequest(LeaseRequest) returns (LeaseResponse);
+  rpc GetLeaseSheet(LeaseSheetRequest) returns (LeaseSheetResponse);
 }

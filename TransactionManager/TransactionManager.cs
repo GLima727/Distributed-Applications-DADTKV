@@ -138,6 +138,22 @@ namespace DADTKV.transactionManager
             WaitForStartTime();
             DebugClass.Log("Wall time completed.");
 
+
+            // Simulate Connections
+            // Send 4 leases requests
+            for (int i = 0; i < 4; i++)
+            {
+                foreach (var lm in _lmsClients)
+                {
+                    var req = new LeaseRequest();
+                    var lease = new Lease();
+                    lease.TmId = _id;
+                    lease.Leases.Add("ola");
+                    req.LeaseDetails = lease;
+                    lm.Value.ProcessLeaseRequest(req);
+                }
+            }
+
             while (true) ;
         }
     }

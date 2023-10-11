@@ -99,10 +99,22 @@ namespace DADTKV.leaseManager
         /// </remarks>
         private int _current_round = 0;
 
+        private List<Lease> _buffer = new List<Lease>();
+        private object _bufferLock = new object();
+
+
         /// <summary>
         /// Default constructor for Lease Manager.
         /// </summary>
         public LeaseManager() { }
+
+        public void AddLeaseToBuffer(Lease l)
+        {
+            lock (_bufferLock)
+            {
+                _buffer.Add(l);
+            }
+        }
 
         /// <summary>
         /// Creates connections to other Lease Managers (LMs).
@@ -190,6 +202,24 @@ namespace DADTKV.leaseManager
             DebugClass.Log("Waiting for wall time.");
             WaitForStartTime();
             DebugClass.Log("Wall time completed.");
+
+            System.Threading.Thread.Sleep(5000); // Simulate paxos 
+
+            if (_id.Equals("LeaseManager1"))
+            {
+                foreach (var tm in _tmsClients)
+                {
+                    var leaseS = new LeaseSheet();
+                    lock (_bufferLock)
+                    {
+                        leaseS.LeaseSheet_.AddRange(_buffer);
+                    }
+
+                    var req = new LeaseSheetRequest();
+                    req.LeaseSheet = leaseS;
+                    tm.GetLeaseSheet(req);
+                }
+            }
 
             while (true) ;
         }

@@ -8,8 +8,8 @@ message LeaseRequest { Lease lease_details = 1; }
 
 message LeaseResponse {}
 
-//do lm para o tm
-message LeaseSheetRequest { repeated Lease lease_sheet = 1; }
+// do lm para o tm
+message LeaseSheetRequest { LeaseSheet lease_sheet = 1; }
 
 message LeaseSheetResponse {}
 
