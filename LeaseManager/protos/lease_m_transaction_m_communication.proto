@@ -8,7 +8,10 @@ message LeaseRequest { Lease lease_details = 1; }
 
 message LeaseResponse {}
 
-message LeaseSheetRequest { LeaseSheet lease_sheet = 1; }
+message LeaseSheetRequest { 
+    LeaseSheet lease_sheet = 1; 
+    int32 id = 2;
+}
 
 message LeaseSheetResponse {}
 

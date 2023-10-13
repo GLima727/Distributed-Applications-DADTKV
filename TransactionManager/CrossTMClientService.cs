@@ -22,7 +22,6 @@ namespace DADTKV.transactionManager
                 if(timeSlot != _transactionManager.TimeSlot)
                 {
                     _transactionManager.TmsClients[tmID].Item1.PropagateLeases(request);
-
                 }
             }
         }

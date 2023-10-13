@@ -123,7 +123,7 @@ namespace DADTKV.initializer
 
                                 foreach (DADProcess process in processes)
                                 {
-                                    if (process is DADManagerProcess && process.Id == suspicious)
+                                    if ((process is DADManagerProcess && process.Id == suspicious) || process is DADLeaseManagerProc)
                                     {
                                         ((DADManagerProcess)process).AddSusTuple(new Tuple<int, string>(timeSlot, suspect));
                                     }
