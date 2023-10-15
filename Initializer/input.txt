@@ -1,21 +1,15 @@
-#P TM1 T http://localhost:8080
-#P TM2 T http://localhost:8081
-#P TM3 T http://localhost:8082
-#P LeaseManager1 L http://localhost:8083
-#P LM2 L http://localhost:8084
-#P lease3 L http://localhost:8085
-#P client1 C script1
-# P c2 C another-script
-# P c3 C one_more_script
-# P c4 C cs4
-# P c5 C cs5
-# P c6 C cs6
+P TM1 T http://localhost:8080
+P lease5 L http://localhost:8087
+P lease6 L http://localhost:8088
+P lease7 L http://localhost:8089
+P lease8 L http://localhost:8090
+P client1 C script1
 
 S 10000
 
-T 19:04:15
+T 20:46:00
 
 D 10000 
 
-F 1 N N N
-F 2 N N N
+F 1 N N N N N
+F 2 N N N N N

@@ -24,8 +24,7 @@ namespace DADTKV.transactionManager
                 _transactionManager.TmsClients[tmID].Item1.PropagateLeases(request);
 
             }
-     
-            }
+             
         }
     }
 }

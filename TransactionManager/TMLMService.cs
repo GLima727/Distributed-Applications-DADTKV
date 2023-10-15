@@ -14,6 +14,7 @@
             Lease lease = new Lease();
             lease.TmId = _transactionManager.Id;
             lease.Leases.AddRange(_transactionManager.LeasesMissing);
+            requestLease.LeaseDetails = lease;
 
             foreach (var lm in _transactionManager.LmsClients)
             {

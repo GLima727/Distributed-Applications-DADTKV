@@ -34,7 +34,6 @@ namespace DADTKV.client
             // Create connections to other Transmissions Managers
             foreach (var tm in Tms)
             {
-                Console.WriteLine("ola");
                 GrpcChannel channel = GrpcChannel.ForAddress(tm);
                 var tmChannel = new ClientServerService.ClientServerServiceClient(channel);
                 TmsChannels.Add(tmChannel);
@@ -76,7 +75,7 @@ namespace DADTKV.client
             {
                 foreach (Command command in Commands)
                 {
-                    command.Print();
+                    //command.Print();
                 }
             }
         }
@@ -89,9 +88,11 @@ namespace DADTKV.client
 
             createConnectionsToTms();
 
+           
+            ParseAndExecuteCommands(clientServer);
             while (true)
             {
-                ParseAndExecuteCommands(clientServer);
+
             }
             
         }

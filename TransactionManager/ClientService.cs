@@ -19,16 +19,20 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
-
+            
 
             ClientTransactionReply reply = new ClientTransactionReply();
+
 
             foreach (string readOp in request.ReadOperations)
             {
 
                 if (!_transactionManager.LeaseList.Contains(readOp))    
                 {
+                    Console.WriteLine("hmdwdmm");
                     _transactionManager.LeasesMissing.Add(readOp);
+                    Console.WriteLine("~depois de aedicionar para um read", _transactionManager.LeasesMissing.Count);
+                    Console.WriteLine(_transactionManager.LeasesMissing.Count());
                 }
 
             }
@@ -38,13 +42,21 @@ namespace DADTKV.transactionManager
                 if (!_transactionManager.LeaseList.Contains(dadInt.Key))
                 {
                     _transactionManager.LeasesMissing.Add(dadInt.Key);
+                    Console.WriteLine("~depois de aedicionar para um writed");
+                    Console.WriteLine(_transactionManager.LeasesMissing.Count());
+
                 }
             }
 
             //send lms for the lease sheet but check if its down
             if (!_transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot))
             {
-                _transactionManager.TMLMService.RequestLeases();
+                Console.WriteLine("antes de verificar", _transactionManager.LeasesMissing.Count);
+                Console.WriteLine(_transactionManager.LeasesMissing.Count());
+                if (_transactionManager.LeasesMissing.Count != 0)
+                {
+                    _transactionManager.TMLMService.RequestLeases();
+                }
 
             }
 
@@ -91,7 +103,6 @@ namespace DADTKV.transactionManager
 
                 }
             }
-
             return reply;
         }
 
@@ -135,12 +146,16 @@ namespace DADTKV.transactionManager
         public ClientTransactionReply executeOperations(ClientTransactionRequest request)
         {
             ClientTransactionReply reply = new ClientTransactionReply();
+            int flag = 0;
             foreach (string readOp in request.ReadOperations)
             {
+
                 foreach (DADInt memDadInt in _transactionManager.DadInts)
                 {
+
                     if (memDadInt.Key == readOp)
                     {
+                        Console.WriteLine(memDadInt.Value);
                         reply.ObjValues.Add(memDadInt.Value); //add value to reply
                     }
                 }
@@ -148,13 +163,27 @@ namespace DADTKV.transactionManager
 
             foreach (DADInt dadInt in request.WriteOperations)
             {
-                foreach (DADInt memDadInt in _transactionManager.DadInts)
+                if(_transactionManager.DadInts.Count == 0)
                 {
-                    if (memDadInt.Key == dadInt.Key)
+                    _transactionManager.DadInts.Add(dadInt);
+                }
+                else
+                {
+                    foreach (DADInt memDadInt in _transactionManager.DadInts)
                     {
-                        memDadInt.Value = dadInt.Value; //write value
+                        if (memDadInt.Key == dadInt.Key)
+                        {
+                            flag = 1;
+                            memDadInt.Value = dadInt.Value; //write value
+                        }
+                    }
+                    if (flag == 0)
+                    {
+                        _transactionManager.DadInts.Add(dadInt);
                     }
                 }
+
+
             }
             return reply;
         }
