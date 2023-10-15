@@ -41,8 +41,12 @@ namespace DADTKV.transactionManager
                 }
             }
 
-            //send lms for the lease sheet
-            _transactionManager.TMLMService.RequestLeases();
+            //send lms for the lease sheet but check if its down
+            if (!_transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot))
+            {
+                _transactionManager.TMLMService.RequestLeases();
+
+            }
 
             //receive leasesheet
             _transactionManager.Signal.Wait();
@@ -52,36 +56,30 @@ namespace DADTKV.transactionManager
             {
                 if (leaseSheet.GetTmID() == _transactionManager.Id)
                 {
-                    if (leaseSheet.GetOrder() == 1) //if it sees its own leases
+                    if (leaseSheet.GetOrder() == 1) 
                     {
-                        //execute transaction
                         reply = executeOperations(request);
                     }
                     else
                     {
-                        //lookback
                         lookBackLeases(leaseSheet);
                         _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
                         _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
 
-                        //execute transaction
                         reply = executeOperations(request);
                     }
-                    //lookahead
 
                     Dictionary<string, List<string>> leasesToSend = lookAheadLeases(leaseSheet);
                     foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
                     {
-                        //check if tm suspects tm he is sending to
-                        foreach(var suspicion in _transactionManager.SusList)
+                        //first check if the tm is down in this moment
+                        if( !_transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot))
                         {
-                            //if the suspicion is in the current time check for id
-                            if(suspicion.Item1 == _transactionManager.TimeSlot)
-                            {
+                            //im checking the suspicion list inside this
+                            //here you ask for leases but dont send the request if you suspect the one you are asking
+                            _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
 
-                            }
                         }
-                        _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
 
                         // remove A from ("A","B") and so on
                         foreach (string lease in leases.Value)

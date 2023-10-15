@@ -16,15 +16,15 @@ namespace DADTKV.transactionManager
             PropagateLeasesRequest request = new PropagateLeasesRequest();
             request.Leases.AddRange(leases);
 
-            //checks if any transaction manager is down at the moment, if it is we dont propagate
-            foreach(int timeSlot in _transactionManager.TmsClients[tmID].Item2)
-            {
-                if(timeSlot != _transactionManager.TimeSlot)
-                {
-                    _transactionManager.TmsClients[tmID].Item1.PropagateLeases(request);
+            //checks if any transaction manager can respond to it in this timeslot
 
-                }
+            if( !_transactionManager.TmsClients[tmID].Item2.Contains( _transactionManager.TimeSlot))
+            {
+                //if you dont suspect the tm at this timeslot you can ask for the leases
+                _transactionManager.TmsClients[tmID].Item1.PropagateLeases(request);
+
             }
+     
         }
     }
 }
