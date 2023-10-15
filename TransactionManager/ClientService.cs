@@ -19,7 +19,6 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
-            
 
             ClientTransactionReply reply = new ClientTransactionReply();
 
@@ -56,13 +55,12 @@ namespace DADTKV.transactionManager
                 if (_transactionManager.LeasesMissing.Count != 0)
                 {
                     _transactionManager.TMLMService.RequestLeases();
+                    //receive leasesheet
+                    _transactionManager.Signal.Wait();
+                    _transactionManager.Signal.Reset();
                 }
 
             }
-
-            //receive leasesheet
-            _transactionManager.Signal.Wait();
-            _transactionManager.Signal.Reset();
 
             foreach (LeaseSheet leaseSheet in _transactionManager.LeaseSheets)
             {
@@ -75,8 +73,10 @@ namespace DADTKV.transactionManager
                     else
                     {
                         lookBackLeases(leaseSheet);
-                        _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
-                        _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
+                        if (_transactionManager.LeasesMissing.Count != 0) { 
+                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
+                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
+                        }
 
                         reply = executeOperations(request);
                     }

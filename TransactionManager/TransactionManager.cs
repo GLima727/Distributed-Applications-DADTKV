@@ -107,7 +107,7 @@ namespace DADTKV.transactionManager
                         roundsSuspected.Add(susList.Item1);
                     }
                 }
-
+                TransactionManagerSignals.Add(tm.Item1, new ManualResetEventSlim(false));
                 Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple 
                     = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> (client, roundsSuspected);
 
