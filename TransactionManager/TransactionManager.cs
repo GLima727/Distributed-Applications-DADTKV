@@ -89,14 +89,27 @@ namespace DADTKV.transactionManager
 
         public void createConnectionsToTms()
         {
+            List<int> roundsSuspected;
             // Create connections to other Transmissions Managers
             foreach (var tm in Tms)
             {
                 GrpcChannel channel = GrpcChannel.ForAddress(tm.Item2);
                 var client = new CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient(channel);
 
+                roundsSuspected = new List<int>();
+                
+                foreach (Tuple<int,string> susList in SusList)
+                {
+                    //if the current tm suspects this tm in any rounds
+                    if(susList.Item2 == tm.Item1)
+                    {
+                        //rounds where current tm will not talk with the clienttm
+                        roundsSuspected.Add(susList.Item1);
+                    }
+                }
+                TransactionManagerSignals.Add(tm.Item1, new ManualResetEventSlim(false));
                 Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple 
-                    = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> (client, RoundsDowns);
+                    = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> (client, roundsSuspected);
 
                 TmsClients.Add(tm.Item1, tuple);
             }
@@ -142,21 +155,6 @@ namespace DADTKV.transactionManager
             WaitForStartTime();
             DebugClass.Log("Wall time completed.");
 
-
-            // Simulate Connections
-            // Send 4 leases requests
-            for (int i = 0; i < 4; i++)
-            {
-                foreach (var lm in _lmsClients)
-                {
-                    var req = new LeaseRequest();
-                    var lease = new Lease();
-                    lease.TmId = _id;
-                    lease.Leases.Add("ola");
-                    req.LeaseDetails = lease;
-                    lm.Value.ProcessLeaseRequest(req);
-                }
-            }
 
             while (true) ;
         }

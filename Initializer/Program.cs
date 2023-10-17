@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace DADTKV.initializer
 {
@@ -106,7 +105,7 @@ namespace DADTKV.initializer
                         int numOfProc = -2;
                         foreach (string suspicion in suspicionLog)
                         {
-                            if (roundsDownPart == 1 && suspicion[0] == 'C') 
+                            if (roundsDownPart == 1 && suspicion[0] == 'C')
                             {
                                 if (processes[numOfProc] is DADManagerProcess manProcess)
                                 {
@@ -154,7 +153,8 @@ namespace DADTKV.initializer
                 proc.TimeStart = timeStart;
             }
 
-            foreach (var proc in processes) {
+            foreach (var proc in processes)
+            {
                 Thread.Sleep(200);
                 Process.Start(proc.GetProcessStartInfo(os));
             }
