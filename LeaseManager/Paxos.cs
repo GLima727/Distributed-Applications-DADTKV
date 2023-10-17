@@ -62,6 +62,11 @@ namespace DADTKV.leaseManager
             return false;
         }
 
+        public bool IsDown()
+        {
+            return _lm.RoundsDowns.Contains(_paxosRoundN);
+        }
+
         public List<string> getSusList(int paxosRound)
         {
             var susList = new List<string>();
@@ -84,7 +89,7 @@ namespace DADTKV.leaseManager
         {
             _paxosRoundN++;
 
-            if (IsLeader() && _lm.Buffer.LeaseSheet_.Count() != 0)
+            if (IsLeader() && _lm.Buffer.LeaseSheet_.Count() != 0 && !IsDown())
             {
                 List<string> susList = getSusList(_paxosRoundN);
 

@@ -20,7 +20,7 @@ namespace DADTKV.leaseManager
         {
             var resp = new Promise();
 
-            if (!_lm.LmPaxos.IsLeader() && _lm.LmPaxos.LmPaxosTuple.ReadTimestamp < request.ReadTimestamp)
+            if (!_lm.LmPaxos.IsDown() && !_lm.LmPaxos.IsLeader() && _lm.LmPaxos.LmPaxosTuple.ReadTimestamp < request.ReadTimestamp)
             {
                 resp.ReadTimestamp = request.ReadTimestamp;
                 _lm.LmPaxos.LmPaxosTuple.ReadTimestamp = request.ReadTimestamp;
@@ -51,7 +51,7 @@ namespace DADTKV.leaseManager
         {
             var resp = new Accepted();
             resp.Accepted_ = false;
-            if (!_lm.LmPaxos.IsLeader() && request.WriteTimestamp == _lm.LmPaxos.LmPaxosTuple.ReadTimestamp)
+            if (!_lm.LmPaxos.IsDown() && !_lm.LmPaxos.IsLeader() && request.WriteTimestamp == _lm.LmPaxos.LmPaxosTuple.ReadTimestamp)
             {
                 _lm.LmPaxos.LmPaxosTuple.WriteTimestamp = request.WriteTimestamp;
                 _lm.LmPaxos.LmPaxosTuple.Value = request.Val;
