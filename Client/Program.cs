@@ -18,6 +18,7 @@
                     }
                 }
             }
+            DebugClass.IsEnabled = true;
             cl.Start();
         }
     }

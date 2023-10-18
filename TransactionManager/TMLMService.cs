@@ -3,9 +3,16 @@
     class TMLMService
     {
         private TransactionManager _transactionManager;
-        public TMLMService(TransactionManager transactionManager) 
+        public TMLMService(TransactionManager transactionManager)
         {
-            this._transactionManager = transactionManager;
+            _transactionManager = transactionManager;
+        }
+
+        public static async Task<LeaseResponse> RequestLs(
+        LMTMCommunicationService.LMTMCommunicationServiceClient client,
+        LeaseRequest request)
+        {
+            return await client.ProcessLeaseRequestAsync(request);
         }
 
         public void RequestLeases()
@@ -16,10 +23,14 @@
             lease.Leases.AddRange(_transactionManager.LeasesMissing);
             requestLease.LeaseDetails = lease;
 
-            foreach (var lm in _transactionManager.LmsClients)
+            var tasks = new List<Task<LeaseResponse>>();
+
+            foreach (var val in _transactionManager.LmsClients)
             {
-                lm.Value.ProcessLeaseRequest(requestLease);
+                tasks.Add(RequestLs(val.Value, requestLease));
             }
+
+            Task.WhenAll(tasks);
         }
     }
 }

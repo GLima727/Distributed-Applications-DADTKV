@@ -16,7 +16,7 @@ namespace DADTKV.client
 
         public List<string> Tms { get { return _tms; } set { _tms = value; } }
 
-        private List<Command> _commands;
+        private List<Command> _commands = new List<Command>();
 
         public List<Command> Commands { get { return _commands; } set { _commands = value; } }
 
@@ -26,8 +26,6 @@ namespace DADTKV.client
             = new List<ClientServerService.ClientServerServiceClient>();
 
         public List<ClientServerService.ClientServerServiceClient> TmsChannels { get { return _tmsChannels; } }
-
-
 
         public void createConnectionsToTms()
         {
@@ -45,22 +43,23 @@ namespace DADTKV.client
             try
             {
                 Commands = ScriptParser.ParseScript(Script);
-
-
                 foreach (Command command in Commands)
                 {
                     switch (command)
                     {
                         case TCommand:
                             TCommand tCommand = (TCommand)command;
+                            DebugClass.Log(tCommand.ToString());
                             clientServer.SubmitTransaction(tCommand.GetReadSet(), tCommand.GetWriteSet());
                             break;
                         case SCommand:
                             SCommand sCommand = (SCommand)command;
+                            DebugClass.Log(sCommand.ToString());
                             clientServer.Status();
                             break;
                         case WCommand:
                             WCommand wCommand = (WCommand)command;
+                            DebugClass.Log(wCommand.ToString());
                             Thread.Sleep(wCommand.GetWaitTime());
                             break;
                     }
@@ -82,19 +81,14 @@ namespace DADTKV.client
 
         public void Start()
         {
-            Console.WriteLine("Started client: " + Id);
-
+            DebugClass.Log("Started client: " + Id);
             ClientService clientServer = new ClientService(this);
 
             createConnectionsToTms();
+            DebugClass.Log("Connections to Tms created");
 
-           
             ParseAndExecuteCommands(clientServer);
-            while (true)
-            {
-
-            }
-            
+            while (true) { }
         }
     }
 }

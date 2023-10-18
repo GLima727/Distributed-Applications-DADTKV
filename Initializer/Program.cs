@@ -153,10 +153,32 @@ namespace DADTKV.initializer
                 proc.TimeStart = timeStart;
             }
 
+
             foreach (var proc in processes)
             {
-                Thread.Sleep(200);
-                Process.Start(proc.GetProcessStartInfo(os));
+                if (proc is DADLeaseManagerProc)
+                {
+                    Thread.Sleep(200);
+                    Process.Start(proc.GetProcessStartInfo(os));
+                }
+            }
+
+            foreach (var proc in processes)
+            {
+                if (proc is DADTransactionManagerProc)
+                {
+                    Thread.Sleep(200);
+                    Process.Start(proc.GetProcessStartInfo(os));
+                }
+            }
+
+            foreach (var proc in processes)
+            {
+                if (proc is DADClientProc)
+                {
+                    Thread.Sleep(200);
+                    Process.Start(proc.GetProcessStartInfo(os));
+                }
             }
         }
     }

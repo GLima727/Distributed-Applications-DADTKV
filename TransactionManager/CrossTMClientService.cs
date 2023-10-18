@@ -1,6 +1,4 @@
-﻿using Grpc.Core;
-
-namespace DADTKV.transactionManager
+﻿namespace DADTKV.transactionManager
 {
     class CrossTMClientService
     {

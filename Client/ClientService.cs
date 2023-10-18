@@ -1,6 +1,4 @@
-﻿using Grpc.Net.Client;
-
-namespace DADTKV.client
+﻿namespace DADTKV.client
 {
     class ClientService
     {
@@ -11,7 +9,6 @@ namespace DADTKV.client
         /// </summary>
         public ClientService(Client client)
         {
-
             _client = client;
         }
 
@@ -30,8 +27,6 @@ namespace DADTKV.client
         /// </summary>
         public void SubmitTransaction(List<string> readSet, List<(string, int)> writeSet)
         {
-
-            
             ClientTransactionRequest request = new ClientTransactionRequest();
             request.ClientId = _client.Id;
             request.ReadOperations.Add(readSet);
@@ -45,7 +40,7 @@ namespace DADTKV.client
                 };
                 request.WriteOperations.Add(dADInt);
             }
-            
+
             ClientTransactionReply reply = GetTransactionManager().SubmitTransaction(request);
 
             foreach (int value in reply.ObjValues)

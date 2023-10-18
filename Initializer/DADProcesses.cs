@@ -247,7 +247,7 @@ namespace DADTKV.initializer
         public string script = "";
         public DADClientProc(string projectPath, string id, string script) : base(projectPath, id)
         {
-            this.script = projectPath + "Initializer\\scripts\\" + script + ".txt";
+            this.script = projectPath + "Initializer/scripts/" + script + ".txt";
         }
 
         public override string GetProcessArgs()

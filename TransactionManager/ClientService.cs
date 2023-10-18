@@ -1,5 +1,4 @@
 ﻿using Grpc.Core;
-using System.Linq;
 
 namespace DADTKV.transactionManager
 {
@@ -17,97 +16,98 @@ namespace DADTKV.transactionManager
             return Task.FromResult(SubmitTransactionImpl(clientTransactionRequest));
         }
 
+        public bool TmIsDown()
+        {
+            return _transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot);
+        }
+
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
-
-            lock (this)
+            DebugClass.Log("Received transaction.");
+            ClientTransactionReply reply = new ClientTransactionReply();
+            if (TmIsDown())
             {
-                ClientTransactionReply reply = new ClientTransactionReply();
-
-
-                foreach (string readOp in request.ReadOperations)
-                {
-
-                    if (!_transactionManager.LeaseList.Contains(readOp))
-                    {
-                        Console.WriteLine("hmdwdmm");
-                        _transactionManager.LeasesMissing.Add(readOp);
-                        Console.WriteLine("~depois de aedicionar para um read", _transactionManager.LeasesMissing.Count);
-                        Console.WriteLine(_transactionManager.LeasesMissing.Count());
-                    }
-
-                }
-
-                foreach (DADInt dadInt in request.WriteOperations)
-                {
-                    if (!_transactionManager.LeaseList.Contains(dadInt.Key))
-                    {
-                        _transactionManager.LeasesMissing.Add(dadInt.Key);
-                        Console.WriteLine("~depois de aedicionar para um writed");
-                        Console.WriteLine(_transactionManager.LeasesMissing.Count());
-
-                    }
-                }
-
-                //send lms for the lease sheet but check if its down
-                if (!_transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot))
-                {
-                    Console.WriteLine("antes de verificar", _transactionManager.LeasesMissing.Count);
-                    Console.WriteLine(_transactionManager.LeasesMissing.Count());
-                    if (_transactionManager.LeasesMissing.Count != 0)
-                    {
-                        _transactionManager.TMLMService.RequestLeases();
-                        //receive leasesheet
-                        _transactionManager.Signal.Wait();
-                        _transactionManager.Signal.Reset();
-                    }
-
-                }
-
-                foreach (LeaseSheet leaseSheet in _transactionManager.LeaseSheets)
-                {
-                    if (leaseSheet.GetTmID() == _transactionManager.Id)
-                    {
-                        if (leaseSheet.GetOrder() == 1)
-                        {
-                            reply = executeOperations(request);
-                        }
-                        else
-                        {
-                            lookBackLeases(leaseSheet);
-                            if (_transactionManager.LeasesMissing.Count != 0)
-                            {
-                                _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
-                                _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
-                            }
-
-                            reply = executeOperations(request);
-                        }
-
-                        Dictionary<string, List<string>> leasesToSend = lookAheadLeases(leaseSheet);
-                        foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
-                        {
-                            //first check if the tm is down in this moment
-                            if (!_transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot))
-                            {
-                                //im checking the suspicion list inside this
-                                //here you ask for leases but dont send the request if you suspect the one you are asking
-                                _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
-
-                            }
-
-                            // remove A from ("A","B") and so on
-                            foreach (string lease in leases.Value)
-                            {
-                                _transactionManager.LeaseList.Remove(lease);
-
-                            }
-                        }
-
-                    }
-                }
                 return reply;
             }
+
+            DebugClass.Log("Check for read transactions.");
+            foreach (string readOp in request.ReadOperations)
+            {
+                DebugClass.Log($"Received lease {readOp}.");
+                if (!_transactionManager.ContainsLease(readOp))
+                {
+                    DebugClass.Log($"Doesn't have lease {readOp}.");
+                    _transactionManager.AddMissingLease(readOp);
+                }
+
+            }
+
+            DebugClass.Log("Check for write transactions.");
+            foreach (DADInt dadInt in request.WriteOperations)
+            {
+                DebugClass.Log($"Received lease {dadInt.Key}.");
+                if (!_transactionManager.ContainsLease(dadInt.Key))
+                {
+                    _transactionManager.AddMissingLease(dadInt.Key);
+                    DebugClass.Log($"Doesn't have lease {dadInt.Key}.");
+                }
+            }
+
+            if (_transactionManager.LeasesMissing.Count != 0)
+            {
+                _transactionManager.TMLMService.RequestLeases();
+                DebugClass.Log("Sent lease requests.");
+                // Wait to receive lease sheet
+                _transactionManager.Signal.Wait();
+                DebugClass.Log("Received signal.");
+                _transactionManager.Signal.Reset();
+            }
+
+            // send lms for the lease sheet but check if its down
+            foreach (LeaseSheet leaseSheet in _transactionManager.LeaseSheets)
+            {
+                if (leaseSheet.GetTmID() == _transactionManager.Id)
+                {
+                    if (leaseSheet.GetOrder() == 1)
+                    {
+                        lock (_transactionManager)
+                        {
+                            reply = executeOperations(request);
+                        }
+                    }
+                    else
+                    {
+                        lookBackLeases(leaseSheet);
+                        if (_transactionManager.LeasesMissing.Count != 0)
+                        {
+                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
+                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
+                        }
+                        lock (_transactionManager)
+                        {
+                            reply = executeOperations(request);
+                        }
+                    }
+
+                    Dictionary<string, List<string>> leasesToSend = lookAheadLeases(leaseSheet);
+                    foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
+                    {
+                        //im checking the suspicion list inside this
+                        //here you ask for leases but dont send the request if you suspect the one you are asking
+                        lock (_transactionManager)
+                        {
+                            _transactionManager.CrossTMClientService.PropagateLease(leases.Key, leases.Value);
+                        }
+
+                        // remove A from ("A","B") and so on
+                        foreach (string lease in leases.Value)
+                        {
+                            _transactionManager.RemoveLeaseToList(lease);
+                        }
+                    }
+                }
+            }
+            return reply;
         }
 
         public Dictionary<string, List<string>> lookAheadLeases(LeaseSheet currentLease)
@@ -118,7 +118,8 @@ namespace DADTKV.transactionManager
                 for (int i = currentLease.GetOrder() + 1; i < _transactionManager.LeaseSheets.Count; i++)
                 {
 
-                    if ( _transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
+                    if (_transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id
+                            && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
                     {
                         //atencao verificar se ele nao esta a criar ids repetidos no dicionario
                         leasesToSend[_transactionManager.LeaseSheets[i].GetTmID()].Add(lease);
@@ -137,7 +138,8 @@ namespace DADTKV.transactionManager
                 List<string> leases = new List<string>();
                 for (int i = leaseSheet.GetOrder() - 1; i >= 0; i--)
                 {
-                    if (_transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
+                    if (_transactionManager.LeaseSheets[i].GetTmID() != _transactionManager.Id
+                            && _transactionManager.LeaseSheets[i].GetLeases().Contains(lease))
                     {
                         leases.Add(lease);
                         break;
@@ -167,7 +169,7 @@ namespace DADTKV.transactionManager
 
             foreach (DADInt dadInt in request.WriteOperations)
             {
-                if(_transactionManager.DadInts.Count == 0)
+                if (_transactionManager.DadInts.Count == 0)
                 {
                     _transactionManager.DadInts.Add(dadInt);
                 }

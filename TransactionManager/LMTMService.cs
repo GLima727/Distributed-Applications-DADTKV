@@ -38,26 +38,22 @@ namespace DADTKV.transactionManager
                 {
                     DebugClass.Log(content);
                 }
+
                 LeaseSheet leaseSheet = new LeaseSheet();
                 leaseSheet.tmID = lease.TmId;
                 leaseSheet.order = count++;
 
                 leaseSheet.leases = new List<string>(lease.Leases);
-                _transactionManager.LeaseSheets.Add(leaseSheet);
+                _transactionManager.AddLeaseSheet(leaseSheet);
                 foreach (string partOfLease in lease.Leases)
                 {
-
-                    _transactionManager.LeasesMissing.Remove(partOfLease);
-                    _transactionManager.LeaseList.Add(partOfLease);
-
-
+                    _transactionManager.RemoveMissingLease(partOfLease);
+                    _transactionManager.AddLeaseToList(partOfLease);
                 }
             }
 
-
-                _transactionManager.Signal.Set();
-            
-
+            DebugClass.Log("Sent dignal to thread.");
+            _transactionManager.Signal.Set();
 
             return new LeaseSheetResponse();
         }

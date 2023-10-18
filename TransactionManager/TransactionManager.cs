@@ -37,22 +37,39 @@ namespace DADTKV.transactionManager
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
         private List<string> _leasesMissing = new List<string>();
-
-        public List<string> LeasesMissing { get { return _leasesMissing; } set { _leasesMissing = value; } }
+        private object _leasesMissingLock = new object();
+        public List<string> LeasesMissing
+        {
+            get { lock (_leasesMissingLock) { return _leasesMissing; } }
+            set { lock (_leasesMissingLock) { _leasesMissing = value; } }
+        }
 
         private List<string> _leaseList = new List<string>();
+        private object _leaseListLock = new object();
 
-        public List<string> LeaseList { get { return _leaseList; } set { _leaseList = value; } }
+        public List<string> LeaseList
+        {
+            get { lock (_leaseListLock) { return _leaseList; } }
+            set { lock (_leaseListLock) { _leaseList = value; } }
+        }
 
         private List<LeaseSheet> _leaseSheets = new List<LeaseSheet>();
-        public List<LeaseSheet> LeaseSheets { get { return _leaseSheets; } set { _leaseSheets = value; } }
+        private object _leaseSheetsLock = new object();
+        public List<LeaseSheet> LeaseSheets
+        {
+            get { lock (_leaseSheetsLock) { return _leaseSheets; } }
+            set { lock (_leaseSheetsLock) { _leaseSheets = value; } }
+        }
 
         private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
         public ManualResetEventSlim Signal { get { return _signal; } }
 
         private Dictionary<string, ManualResetEventSlim> _transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
-
-        public Dictionary<string, ManualResetEventSlim> TransactionManagerSignals { get { return _transactionManagerSignals; } }
+        private object _transactionManagerSignalsLock = new object();
+        public Dictionary<string, ManualResetEventSlim> TransactionManagerSignals
+        {
+            get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignals; } }
+        }
 
         private List<DADInt> _dadInts = new List<DADInt>();
         public List<DADInt> DadInts { get { return _dadInts; } set { _dadInts = value; } }
@@ -76,6 +93,13 @@ namespace DADTKV.transactionManager
         private TMLMService _tMLMService;
 
         public TMLMService TMLMService { get { return _tMLMService; } set { _tMLMService = value; } }
+
+        public TransactionManager()
+        {
+            _crossTmClientService = new CrossTMClientService(this);
+            _tMLMService = new TMLMService(this);
+        }
+
         public void createConnectionsToLms()
         {
             // Create connections to other Transmissions Managers
@@ -97,19 +121,19 @@ namespace DADTKV.transactionManager
                 var client = new CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient(channel);
 
                 roundsSuspected = new List<int>();
-                
-                foreach (Tuple<int,string> susList in SusList)
+
+                foreach (Tuple<int, string> susList in SusList)
                 {
                     //if the current tm suspects this tm in any rounds
-                    if(susList.Item2 == tm.Item1)
+                    if (susList.Item2 == tm.Item1)
                     {
                         //rounds where current tm will not talk with the clienttm
                         roundsSuspected.Add(susList.Item1);
                     }
                 }
                 TransactionManagerSignals.Add(tm.Item1, new ManualResetEventSlim(false));
-                Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple 
-                    = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> (client, roundsSuspected);
+                Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple
+                    = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>(client, roundsSuspected);
 
                 TmsClients.Add(tm.Item1, tuple);
             }
@@ -130,9 +154,6 @@ namespace DADTKV.transactionManager
         {
             DebugClass.Log($"Start Transaction Manager {_id}.");
 
-            // Create Server
-            CrossTMClientService = new CrossTMClientService(this);
-            TMLMService = new TMLMService(this);
 
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
@@ -157,6 +178,54 @@ namespace DADTKV.transactionManager
 
 
             while (true) ;
+        }
+
+        public bool ContainsLease(string lease)
+        {
+            lock (_leaseListLock)
+            {
+                return _leaseList.Contains(lease);
+            }
+        }
+
+        public void AddLeaseToList(string lease)
+        {
+            lock (_leaseListLock)
+            {
+                _leaseList.Add(lease);
+            }
+        }
+
+        public void RemoveLeaseToList(string lease)
+        {
+            lock (_leaseListLock)
+            {
+                _leaseList.Remove(lease);
+            }
+        }
+
+        public void AddMissingLease(string lease)
+        {
+            lock (_leasesMissingLock)
+            {
+                _leasesMissing.Add(lease);
+            }
+        }
+
+        public void RemoveMissingLease(string lease)
+        {
+            lock (_leasesMissingLock)
+            {
+                _leasesMissing.Remove(lease);
+            }
+        }
+
+        public void AddLeaseSheet(LeaseSheet leaseS)
+        {
+            lock (_leaseSheetsLock)
+            {
+                _leaseSheets.Add(leaseS);
+            }
         }
     }
 }

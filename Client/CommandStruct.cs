@@ -5,7 +5,6 @@
     /// </summary>  
     public interface Command
     {
-        void Print();
     }
 
     /// <summary>
@@ -26,19 +25,19 @@
         /// <summary>
         /// Prints the details of the T command.
         /// </summary>
-        public void Print()
+        public override string ToString()
         {
-            Console.WriteLine($"Command Type: T command");
-            Console.WriteLine("Read Set:");
+            string s = "Command Type: T read Set<";
             foreach (var key in ReadSet)
             {
-                Console.WriteLine($"- {key}");
+                s += $" {key} |";
             }
-            Console.WriteLine("Write Set:");
+            s += "> write Set <";
             foreach (var (key, value) in WriteSet)
             {
-                Console.WriteLine($"- {key}: {value}");
+                s += $" {key} : {value} |";
             }
+            return s + '>';
         }
         /// <summary>
         /// Returns the List of objects to read in a List of strings
@@ -69,10 +68,9 @@
         /// <summary>
         /// Prints the details of W the command.
         /// </summary>
-        public void Print()
+        public override string ToString()
         {
-            Console.WriteLine($"Command Type: W command");
-            Console.WriteLine($"Wait time: {WaitTime}");
+            return $"Command Type: W command {WaitTime}";
         }
         /// <summary>
         /// Returns the value of the time in an int
@@ -91,9 +89,9 @@
         /// <summary>
         /// Prints the details of S the command.
         /// </summary>
-        public void Print()
+        public override string ToString()
         {
-            Console.WriteLine($"Command Type: S command");
+            return "Command Type: S command";
         }
     }
 }
