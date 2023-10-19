@@ -5,7 +5,7 @@ import "protos/lease_sheet_definitions.proto";
 
 message AcceptRequest {
   float write_timestamp = 1;
-  LeaseSheet val = 2;
+  LeaseList val = 2;
 }
 
 message Accepted { bool accepted = 1; }
@@ -14,7 +14,7 @@ message PrepareRequest { float read_timestamp = 1; }
 
 message Promise {
   float read_timestamp = 1;
-  LeaseSheet val = 2;
+  LeaseList val = 2;
 }
 
 service PaxosCommunicationService {

@@ -9,8 +9,8 @@ namespace DADTKV.leaseManager
         /// <summary>
         /// Value of the tuple. 
         /// </summary>
-        private LeaseSheet? _val;
-        public LeaseSheet? Value
+        private LeaseList? _val;
+        public LeaseList? Value
         {
             get
             {
@@ -74,7 +74,7 @@ namespace DADTKV.leaseManager
             }
         }
 
-        public PaxosTuple(LeaseSheet? inVal, float inWriteTimestamp, float inReadTimestamp)
+        public PaxosTuple(LeaseList? inVal, float inWriteTimestamp, float inReadTimestamp)
         {
             _val = inVal;
             _writeTimestamp = inWriteTimestamp;
@@ -89,9 +89,9 @@ namespace DADTKV.leaseManager
             string leases = "";
             if (_val != null)
             {
-                foreach (var lease in _val.LeaseSheet_.ToList())
+                foreach (var lease in _val.Leases.ToList())
                 {
-                    foreach (var l in lease.Leases.ToList())
+                    foreach (var l in lease.LeasedResources.ToList())
                     {
                         leases += $"{lease.TmId}, {l.ToString()}";
                     }

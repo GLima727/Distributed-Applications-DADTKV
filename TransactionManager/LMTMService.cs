@@ -13,51 +13,29 @@ namespace DADTKV.transactionManager
             _transactionManager = transactionManager;
         }
 
-        public override Task<LeaseSheetResponse> GetLeaseSheet(LeaseSheetRequest propagateLeasesRequest, ServerCallContext context)
+        public override Task<ReceiveLeaseListResponse> ReceiveLeaseList(ReceiveLeaseListRequest request, ServerCallContext context)
         {
-            return Task.FromResult(GetLeaseSheetImpl(propagateLeasesRequest));
+            return Task.FromResult(ReceiveLeaseListImpl(request));
         }
 
-        public LeaseSheetResponse GetLeaseSheetImpl(LeaseSheetRequest request)
+        public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
-            if (_lastLeaseId >= request.Id)
+            if (_lastLeaseId >= request.RequestId)
             {
-                return new LeaseSheetResponse();
+                return new ReceiveLeaseListResponse();
             }
 
-            _lastLeaseId = request.Id;
+            _lastLeaseId = request.RequestId;
 
             DebugClass.Log("Received a lease sheet");
             
-            _transactionManager.LeaseSheets = new List<LeaseSheet>();
-            int count = 1;
-
-            foreach (Lease lease in request.LeaseSheet.LeaseSheet_)
-            {
-                foreach (var content in lease.Leases)
-                {
-                    DebugClass.Log(content);
-                }
-
-                LeaseSheet leaseSheet = new LeaseSheet();
-                leaseSheet.tmID = lease.TmId;
-                leaseSheet.order = count++;
-
-                leaseSheet.leases = new List<string>(lease.Leases);
-                _transactionManager.AddLeaseSheet(leaseSheet);
-                foreach (string partOfLease in lease.Leases)
-                {
-                    _transactionManager.RemoveMissingLease(partOfLease);
-                    _transactionManager.AddLeaseToList(partOfLease);
-                }
-            }
+            _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
             DebugClass.Log("Sent dignal to thread.");
             _transactionManager.Signal.Set();
 
-            return new LeaseSheetResponse();
+            return new ReceiveLeaseListResponse();
         }
-
     }
 }
 

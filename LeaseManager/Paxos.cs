@@ -35,11 +35,11 @@ namespace DADTKV.leaseManager
             return await client.SendAcceptAsync(request);
         }
 
-        static async Task<LeaseSheetResponse> GetLeaseSheet(
+        static async Task<ReceiveLeaseListResponse> SendLeaseSheet(
                 LMTMCommunicationService.LMTMCommunicationServiceClient client,
-                LeaseSheetRequest request)
+                ReceiveLeaseListRequest request)
         {
-            return await client.GetLeaseSheetAsync(request);
+            return await client.ReceiveLeaseListAsync(request);
         }
 
         public bool IsLeader()
@@ -89,12 +89,12 @@ namespace DADTKV.leaseManager
         {
             _paxosRoundN++;
 
-            if (IsLeader() && _lm.Buffer.LeaseSheet_.Count() != 0 && !IsDown())
+            if (IsLeader() && _lm.Buffer.Leases.Count() != 0 && !IsDown())
             {
                 List<string> susList = getSusList(_paxosRoundN);
 
                 _lmPaxosTuple = new PaxosTuple(_lm.Buffer, _lm.LeaderId / 10.0f, 0);
-                _lm.Buffer = new LeaseSheet();
+                _lm.Buffer = new LeaseList();
 
                 int acceptsReceived = 0;
 
@@ -167,13 +167,13 @@ namespace DADTKV.leaseManager
                 }
 
                 DebugClass.Log("commit");
-                var tasksGet = new List<Task<LeaseSheetResponse>>();
-                var getData = new LeaseSheetRequest();
-                getData.Id = _paxosRoundN;
-                getData.LeaseSheet = _lmPaxosTuple.Value;
+                var tasksGet = new List<Task<ReceiveLeaseListResponse>>();
+                var getData = new ReceiveLeaseListRequest();
+                getData.RequestId = _paxosRoundN;
+                getData.LeaseList = _lmPaxosTuple.Value;
                 foreach (LMTMCommunicationService.LMTMCommunicationServiceClient val in _lm.TmsClients)
                 {
-                    tasksGet.Add(GetLeaseSheet(val, getData));
+                    tasksGet.Add(SendLeaseSheet(val, getData));
                 }
 
                 // Wait for task to complete

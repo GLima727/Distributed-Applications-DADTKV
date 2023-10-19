@@ -11,16 +11,16 @@ namespace DADTKV.leaseManager
             _leaseManager = leaseManager;
         }
 
-        public override Task<LeaseResponse> ProcessLeaseRequest(LeaseRequest leaseRequest, ServerCallContext context)
+        public override Task<ReceiveLeaseResponse> ReceiveLease(ReceiveLeaseRequest leaseRequest, ServerCallContext context)
         {
             return Task.FromResult(ProcLeaseReqImpl(leaseRequest));
         }
 
-        public LeaseResponse ProcLeaseReqImpl(LeaseRequest leaseRequest)
+        public ReceiveLeaseResponse ProcLeaseReqImpl(ReceiveLeaseRequest leaseRequest)
         {
             DebugClass.Log("Received a Lease request.");
-            _leaseManager.AddLeaseToBuffer(leaseRequest.LeaseDetails);
-            return new LeaseResponse();
+            _leaseManager.AddLeaseToBuffer(leaseRequest.Lease);
+            return new ReceiveLeaseResponse();
         }
 
     }

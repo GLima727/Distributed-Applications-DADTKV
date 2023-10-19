@@ -2,7 +2,7 @@ syntax = "proto3";
 
 message Lease {
   string tmId = 1;
-  repeated string leases = 2;
+  repeated string leasedResources = 2;
 }
 
-message LeaseSheet { repeated Lease leaseSheet = 1; }
+message LeaseList { repeated Lease leases = 1; }

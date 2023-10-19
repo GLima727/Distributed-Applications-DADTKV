@@ -114,8 +114,8 @@ namespace DADTKV.leaseManager
         /// </remarks>
         private int _current_round = 0;
 
-        private LeaseSheet _buffer = new LeaseSheet();
-        public LeaseSheet Buffer
+        private LeaseList _buffer = new LeaseList();
+        public LeaseList Buffer
         {
             get { lock (_bufferLock) { return _buffer; } }
             set { lock (_bufferLock) { _buffer = value; } }
@@ -159,7 +159,7 @@ namespace DADTKV.leaseManager
         {
             lock (_bufferLock)
             {
-                _buffer.LeaseSheet_.Add(l);
+                _buffer.Leases.Add(l);
             }
         }
 

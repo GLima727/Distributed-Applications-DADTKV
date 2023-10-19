@@ -22,6 +22,7 @@ namespace DADTKV.transactionManager
             {
                 _transactionManager.LeasesMissing.Remove(lease);
             }
+
             if (_transactionManager.LeasesMissing.Count == 0)
             {
                 _transactionManager.TransactionManagerSignals[_transactionManager.Id].Set();

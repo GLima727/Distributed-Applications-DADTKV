@@ -4,18 +4,21 @@ import "protos/lease_sheet_definitions.proto";
 
 // Service for Lease Managers to communicate with TM
 
-message LeaseRequest { Lease lease_details = 1; }
-
-message LeaseResponse {}
-
-message LeaseSheetRequest { 
-    LeaseSheet lease_sheet = 1; 
-    int32 id = 2;
+message ReceiveLeaseRequest {
+  Lease lease = 1;
 }
 
-message LeaseSheetResponse {}
+message ReceiveLeaseResponse {}
+
+message ReceiveLeaseListRequest  { 
+    LeaseList leaseList = 1; 
+    int32 requestId = 2;
+}
+
+message ReceiveLeaseListResponse {}
 
 service LMTMCommunicationService {
-  rpc ProcessLeaseRequest(LeaseRequest) returns (LeaseResponse);
-  rpc GetLeaseSheet(LeaseSheetRequest) returns (LeaseSheetResponse);
+  rpc ReceiveLease(ReceiveLeaseRequest) returns (ReceiveLeaseResponse);
+  rpc ReceiveLeaseList(ReceiveLeaseListRequest) returns (ReceiveLeaseListResponse);
 }
+

@@ -53,12 +53,12 @@ namespace DADTKV.transactionManager
             set { lock (_leaseListLock) { _leaseList = value; } }
         }
 
-        private List<LeaseSheet> _leaseSheets = new List<LeaseSheet>();
+        private List<Lease> _leaseSheet = new List<Lease>();
         private object _leaseSheetsLock = new object();
-        public List<LeaseSheet> LeaseSheets
+        public List<Lease> LeaseSheet
         {
-            get { lock (_leaseSheetsLock) { return _leaseSheets; } }
-            set { lock (_leaseSheetsLock) { _leaseSheets = value; } }
+            get { lock (_leaseSheetsLock) { return _leaseSheet; } }
+            set { lock (_leaseSheetsLock) { _leaseSheet = value; } }
         }
 
         private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
@@ -71,33 +71,36 @@ namespace DADTKV.transactionManager
             get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignals; } }
         }
 
-        private List<DADInt> _dadInts = new List<DADInt>();
-        public List<DADInt> DadInts { get { return _dadInts; } set { _dadInts = value; } }
+        private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
+        private object _dadIntsLock = new object();
+        public Dictionary<string, int> DadInts
+        {
+            get { lock (_dadIntsLock) { return _dadInts; } }
+            set { lock (_dadIntsLock) { _dadInts = value; } }
+        }
 
         //LM ID, Client
         private Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> _lmsClients
             = new Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient>();
 
-        public Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> LmsClients { get { return _lmsClients; } set { _lmsClients = value; } }
+        public Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> LmsClients
+        {
+            get { return _lmsClients; }
+            set { _lmsClients = value; }
+        }
 
         //TM ID, Client
         private Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> _tmsClients
             = new Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>>();
 
-        public Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> TmsClients { get { return _tmsClients; } set { _tmsClients = value; } }
-
-        private CrossTMClientService _crossTmClientService;
-
-        public CrossTMClientService CrossTMClientService { get { return _crossTmClientService; } set { _crossTmClientService = value; } }
-
-        private TMLMService _tMLMService;
-
-        public TMLMService TMLMService { get { return _tMLMService; } set { _tMLMService = value; } }
+        public Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> TmsClients
+        {
+            get { return _tmsClients; }
+            set { _tmsClients = value; }
+        }
 
         public TransactionManager()
         {
-            _crossTmClientService = new CrossTMClientService(this);
-            _tMLMService = new TMLMService(this);
         }
 
         public void createConnectionsToLms()
@@ -153,7 +156,6 @@ namespace DADTKV.transactionManager
         public void Start()
         {
             DebugClass.Log($"Start Transaction Manager {_id}.");
-
 
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
@@ -220,11 +222,11 @@ namespace DADTKV.transactionManager
             }
         }
 
-        public void AddLeaseSheet(LeaseSheet leaseS)
+        public void AddLeaseSheet(Lease lease)
         {
             lock (_leaseSheetsLock)
             {
-                _leaseSheets.Add(leaseS);
+                _leaseSheet.Add(lease);
             }
         }
     }
