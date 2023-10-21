@@ -42,6 +42,13 @@ namespace DADTKV.leaseManager
             return await client.ReceiveLeaseListAsync(request);
         }
 
+        static async Task<SendLeaseListResponse> SendLeaseList(
+                PaxosCommunicationService.PaxosCommunicationServiceClient client,
+                SendLeaseListRequest request)
+        {
+            return await client.SendLeaseListAsync(request);
+        }
+
         public bool IsLeader()
         {
             if (_lm.LeaderId == _lm.Lms.Count())
@@ -166,17 +173,29 @@ namespace DADTKV.leaseManager
                     }
                 }
 
-                DebugClass.Log("commit");
+                
+                var tasksPaxosGet = new List<Task<SendLeaseListResponse>>();
                 var tasksGet = new List<Task<ReceiveLeaseListResponse>>();
+                var paxosData = new SendLeaseListRequest();
+                paxosData.RequestId = _paxosRoundN;
+                paxosData.LeaseList = _lmPaxosTuple.Value;
                 var getData = new ReceiveLeaseListRequest();
                 getData.RequestId = _paxosRoundN;
                 getData.LeaseList = _lmPaxosTuple.Value;
+
+                foreach (KeyValuePair<string, PaxosCommunicationService.PaxosCommunicationServiceClient> val in _lm.LmsClients)
+                {
+                    if (!susList.Contains(val.Key))
+                        tasksPaxosGet.Add(SendLeaseList(val.Value, paxosData));
+                }
+                DebugClass.Log("commit");
                 foreach (LMTMCommunicationService.LMTMCommunicationServiceClient val in _lm.TmsClients)
                 {
                     tasksGet.Add(SendLeaseSheet(val, getData));
                 }
 
                 // Wait for task to complete
+                await Task.WhenAll(tasksPaxosGet);
                 await Task.WhenAll(tasksGet);
             }
             else

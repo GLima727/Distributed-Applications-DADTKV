@@ -61,6 +61,10 @@ namespace DADTKV.transactionManager
             set { lock (_leaseSheetsLock) { _leaseSheet = value; } }
         }
 
+        private int _numberLms;
+
+        public int NumberLms { get { return _numberLms; } set { _numberLms = value; } }
+
         private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
         public ManualResetEventSlim Signal { get { return _signal; } }
 

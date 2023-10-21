@@ -60,6 +60,24 @@ namespace DADTKV.leaseManager
 
             return resp;
         }
+
+        public override Task<SendLeaseListResponse> SendLeaseList(SendLeaseListRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(SendLeaseListImpl(request));
+        }
+
+        public SendLeaseListResponse SendLeaseListImpl(SendLeaseListRequest request)
+        {
+            var resp = new SendLeaseListResponse();
+            var leaseList = new ReceiveLeaseListRequest();
+            leaseList.LeaseList = request.LeaseList;
+            leaseList.RequestId = request.RequestId;
+            foreach(var tm in _lm.TmsClients)
+            {
+                tm.ReceiveLeaseListAsync(leaseList);
+            }
+            return resp;
+        }
     }
 }
 

@@ -24,14 +24,18 @@ namespace DADTKV.transactionManager
             {
                 return new ReceiveLeaseListResponse();
             }
+            _transactionManager.NumberLms++;
+            if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2)
+            {
+                return new ReceiveLeaseListResponse();
+            }
 
             _lastLeaseId = request.RequestId;
-
             DebugClass.Log("Received a lease sheet");
             
             _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
-            DebugClass.Log("Sent dignal to thread.");
+            DebugClass.Log("Sent signal to thread.");
             _transactionManager.Signal.Set();
 
             return new ReceiveLeaseListResponse();

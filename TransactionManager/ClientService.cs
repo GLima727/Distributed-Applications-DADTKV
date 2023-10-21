@@ -56,6 +56,7 @@ namespace DADTKV.transactionManager
             if (_transactionManager.LeasesMissing.Count != 0)
             {
                 RequestLeases();
+                _transactionManager.NumberLms = 0;
                 DebugClass.Log("Sent lease requests.");
                 // Wait to receive lease sheet
                 _transactionManager.Signal.Wait();
@@ -78,6 +79,8 @@ namespace DADTKV.transactionManager
                     {
                         DebugClass.Log($"-----I am the first to receive this Lease");
                         reply = executeOperations(request);
+                        _transactionManager.LeaseList = _transactionManager.LeasesMissing;
+                        _transactionManager.LeasesMissing = new List<string>();
                     }
                     else
                     {

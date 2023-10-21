@@ -21,6 +21,7 @@ namespace DADTKV.transactionManager
             foreach (string lease in request.Leases)
             {
                 _transactionManager.LeasesMissing.Remove(lease);
+                _transactionManager.AddLeaseToList(lease);
             }
 
             if (_transactionManager.LeasesMissing.Count == 0)
