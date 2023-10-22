@@ -20,19 +20,15 @@ namespace DADTKV.transactionManager
 
         public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
-            if (_lastLeaseId >= request.RequestId)
-            {
-                return new ReceiveLeaseListResponse();
-            }
+            if (_lastLeaseId >= request.RequestId) return new ReceiveLeaseListResponse();
+
             _transactionManager.NumberLms++;
-            if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2)
-            {
-                return new ReceiveLeaseListResponse();
-            }
+
+            if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2) return new ReceiveLeaseListResponse();
 
             _lastLeaseId = request.RequestId;
             DebugClass.Log("Received a lease sheet");
-            
+
             _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
             DebugClass.Log("Sent signal to thread.");

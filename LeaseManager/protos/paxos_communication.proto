@@ -17,15 +17,7 @@ message Promise {
   LeaseList val = 2;
 }
 
-message SendLeaseListRequest  { 
-    LeaseList leaseList = 1; 
-    int32 requestId = 2;
-}
-
-message SendLeaseListResponse {}
-
 service PaxosCommunicationService {
   rpc SendAccept(AcceptRequest) returns (Accepted);
   rpc SendPrepare(PrepareRequest) returns (Promise);
-  rpc SendLeaseList(SendLeaseListRequest) returns (SendLeaseListResponse);
 }

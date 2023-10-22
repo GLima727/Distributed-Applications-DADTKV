@@ -56,26 +56,17 @@ namespace DADTKV.leaseManager
                 _lm.LmPaxos.LmPaxosTuple.WriteTimestamp = request.WriteTimestamp;
                 _lm.LmPaxos.LmPaxosTuple.Value = request.Val;
                 resp.Accepted_ = true;
+
+                var leaseList = new ReceiveLeaseListRequest();
+                leaseList.LeaseList = request.Val;
+                leaseList.RequestId = _lm.LmPaxos.PaxosRoundN;
+                DebugClass.Log("Send leaseList to Learners.");
+                foreach (var tm in _lm.TmsClients)
+                {
+                    tm.ReceiveLeaseListAsync(leaseList);
+                }
             }
 
-            return resp;
-        }
-
-        public override Task<SendLeaseListResponse> SendLeaseList(SendLeaseListRequest request, ServerCallContext context)
-        {
-            return Task.FromResult(SendLeaseListImpl(request));
-        }
-
-        public SendLeaseListResponse SendLeaseListImpl(SendLeaseListRequest request)
-        {
-            var resp = new SendLeaseListResponse();
-            var leaseList = new ReceiveLeaseListRequest();
-            leaseList.LeaseList = request.LeaseList;
-            leaseList.RequestId = request.RequestId;
-            foreach(var tm in _lm.TmsClients)
-            {
-                tm.ReceiveLeaseListAsync(leaseList);
-            }
             return resp;
         }
     }
