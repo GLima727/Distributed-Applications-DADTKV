@@ -7,7 +7,6 @@ message PropagateLeasesRequest {
 }
 
 message PropagateLeasesReply {
-	repeated string leases = 1;
 }
 
 service CrossServerTransactionManagerService {

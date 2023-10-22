@@ -68,11 +68,11 @@ namespace DADTKV.transactionManager
         private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
         public ManualResetEventSlim Signal { get { return _signal; } }
 
-        private Dictionary<string, ManualResetEventSlim> _transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
+        private ManualResetEventSlim _crossTransactionManagerSignal = new ManualResetEventSlim(false);
         private object _transactionManagerSignalsLock = new object();
-        public Dictionary<string, ManualResetEventSlim> TransactionManagerSignals
+        public ManualResetEventSlim CrossTransactionManagerSignal
         {
-            get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignals; } }
+            get { lock (_transactionManagerSignalsLock) { return _crossTransactionManagerSignal; } }
         }
 
         private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
@@ -81,6 +81,15 @@ namespace DADTKV.transactionManager
         {
             get { lock (_dadIntsLock) { return _dadInts; } }
             set { lock (_dadIntsLock) { _dadInts = value; } }
+        }
+
+        private Dictionary<string, List<string>> _transactionsManagersLeases = new Dictionary<string, List<string>>();
+        private object _transactionsManagersLeasesLock = new object();
+
+        public Dictionary<string, List <string>> TransactionsManagersLeases
+        {
+            get { lock (_transactionsManagersLeasesLock) { return _transactionsManagersLeases; } }
+            set { lock (_transactionsManagersLeasesLock) { _transactionsManagersLeases = value; } }
         }
 
         //LM ID, Client
@@ -138,7 +147,6 @@ namespace DADTKV.transactionManager
                         roundsSuspected.Add(susList.Item1);
                     }
                 }
-                TransactionManagerSignals.Add(tm.Item1, new ManualResetEventSlim(false));
                 Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple
                     = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>(client, roundsSuspected);
 

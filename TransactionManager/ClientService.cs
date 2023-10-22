@@ -89,8 +89,8 @@ namespace DADTKV.transactionManager
                         if (_transactionManager.LeasesMissing.Count != 0)
                         {
                             // tirar array  
-                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
-                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
+                            _transactionManager.CrossTransactionManagerSignal.Wait();
+                            _transactionManager.CrossTransactionManagerSignal.Reset();
                         }
                         reply = executeOperations(request);
                     }
