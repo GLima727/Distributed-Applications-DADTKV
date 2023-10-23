@@ -19,9 +19,12 @@
         {
             Random rnd = new Random();
             int number = rnd.Next(0, _client.TmsChannels.Count);
-            if (_client.Id == "client2")
+            if (_client.Id == "client1")
+                return _client.TmsChannels[0];
+            else if (_client.Id == "client2")
                 return _client.TmsChannels[1];
-            return _client.TmsChannels[0];
+            else
+                return _client.TmsChannels[2];
         }
 
         /// <summary>

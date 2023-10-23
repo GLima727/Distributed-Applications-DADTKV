@@ -20,14 +20,26 @@ namespace DADTKV.transactionManager
 
         public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
-            if (_lastLeaseId >= request.RequestId) return new ReceiveLeaseListResponse();
-
-            _transactionManager.NumberLms++;
-
-            if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2) return new ReceiveLeaseListResponse();
-
-            _lastLeaseId = request.RequestId;
             DebugClass.Log("Received a lease sheet");
+            lock (this)
+            {
+                if (_lastLeaseId >= request.RequestId)
+                {
+                    DebugClass.Log($"Ignore this lease sheet because {_lastLeaseId} >= {request.RequestId}.");
+                    return new ReceiveLeaseListResponse();
+                }
+
+                _transactionManager.NumberLms++;
+
+                if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2)
+                {
+                    DebugClass.Log($"Still needs {_transactionManager.LmsClients.Count / 2 - _transactionManager.NumberLms}");
+                    return new ReceiveLeaseListResponse();
+                }
+
+                DebugClass.Log("Learnet.");
+                _lastLeaseId = request.RequestId;
+            }
 
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
 

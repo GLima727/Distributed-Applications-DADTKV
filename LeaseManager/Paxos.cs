@@ -14,10 +14,11 @@ namespace DADTKV.leaseManager
         private LeaseManager _lm;
 
         private int _paxosRoundN = 0;
+        private object _paxosRoundNLock = new object();
         public int PaxosRoundN
         {
-            get { return _paxosRoundN; }
-            set { _paxosRoundN = value; }
+            get { lock (_paxosRoundNLock) { return _paxosRoundN; } }
+            set { lock (_paxosRoundNLock) { _paxosRoundN = value; } }
         }
 
         public Paxos(LeaseManager lm)
