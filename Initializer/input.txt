@@ -1,16 +1,16 @@
 P client1 C script1
 P client2 C script2
+P client3 C script2
 P TM1 T http://localhost:8090
 P TM2 T http://localhost:8091
+P TM2 T http://localhost:8092
 P lease1 L http://localhost:8080
 P lease2 L http://localhost:8081
 P lease3 L http://localhost:8082
-P lease4 L http://localhost:8083
-P lease5 L http://localhost:8084
 
 S 10000
 
-T 18:49:55
+T 19:13:55
 
 D 10000 
 

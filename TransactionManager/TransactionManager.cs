@@ -235,7 +235,7 @@ namespace DADTKV.transactionManager
             }
         }
 
-        public void AddLeaseToList(string lease)
+        public void AddLeaseToAvailableList(string lease)
         {
             lock (_leaseListLock)
             {
