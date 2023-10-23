@@ -66,7 +66,7 @@ namespace DADTKV.transactionManager
 
             // send lms for the lease sheet but check if its down
             int lease_index = 0;
-
+            
             // For each Lease i received
             foreach (Lease lease in _transactionManager.LeaseSheet)
             {
@@ -79,7 +79,7 @@ namespace DADTKV.transactionManager
                     {
                         DebugClass.Log($"-----I am the first to receive this Lease");
                         reply = executeOperations(request);
-                        _transactionManager.LeaseList = _transactionManager.LeasesMissing;
+                        _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
                         _transactionManager.LeasesMissing = new List<string>();
                     }
                     else
@@ -88,20 +88,21 @@ namespace DADTKV.transactionManager
                         lookBackLeases(lease, lease_index);
                         if (_transactionManager.LeasesMissing.Count != 0)
                         {
-                            // tirar array  
-                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Wait();
-                            _transactionManager.TransactionManagerSignals[_transactionManager.Id].Reset();
+                            // Wait for lease
+                            _transactionManager.TransactionManagerSignal.Wait();
+                            _transactionManager.TransactionManagerSignal.Reset();
                         }
                         reply = executeOperations(request);
                     }
 
                     // Send Leases to anyone who needs it
+                    DebugClass.Log($"-----Send leases");
                     Dictionary<string, List<string>> leasesToSend = lookAheadLeases(lease, lease_index);
                     foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
                     {
                         //im checking the suspicion list inside this
                         //here you ask for leases but dont send the request if you suspect the one you are asking
-                        PropagateLease(leases.Key, leases.Value);
+                        _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
 
                         // remove A from ("A","B") and so on
                         foreach (string resource in leases.Value)
@@ -206,22 +207,6 @@ namespace DADTKV.transactionManager
             }
 
             Task.WhenAll(tasks);
-        }
-
-        public void PropagateLease(string tmID, List<string> leases)
-        {
-            PropagateLeasesRequest request = new PropagateLeasesRequest();
-            request.Leases.AddRange(leases);
-
-            //checks if any transaction manager can respond to it in this timeslot
-            lock (_transactionManager)
-            {
-                if (!_transactionManager.TmsClients[tmID].Item2.Contains(_transactionManager.TimeSlot))
-                {
-                    //if you dont suspect the tm at this timeslot you can ask for the leases
-                    _transactionManager.TmsClients[tmID].Item1.PropagateLeases(request);
-                }
-            }
         }
     }
 }

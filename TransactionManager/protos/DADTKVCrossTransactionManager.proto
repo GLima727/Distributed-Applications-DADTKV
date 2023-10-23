@@ -1,15 +1,16 @@
 syntax = "proto3";
 
-//Service where Transaction Managers talk between themselves
+// Service where Transaction Managers talk between themselves
+
+import "protos/lease_sheet_definitions.proto";
 
 message PropagateLeasesRequest {
-	repeated string leases = 1;
+  Lease lease = 1;
+  int32 id = 2;
 }
 
-message PropagateLeasesReply {
-	repeated string leases = 1;
-}
+message PropagateLeasesReply {}
 
 service CrossServerTransactionManagerService {
-	rpc PropagateLeases (PropagateLeasesRequest) returns (PropagateLeasesReply);
+  rpc PropagateLeases(PropagateLeasesRequest) returns (PropagateLeasesReply);
 }

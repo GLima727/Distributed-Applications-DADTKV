@@ -172,6 +172,7 @@ namespace DADTKV.initializer
                 }
             }
 
+            Thread.Sleep(2000);
             foreach (var proc in processes)
             {
                 if (proc is DADClientProc)

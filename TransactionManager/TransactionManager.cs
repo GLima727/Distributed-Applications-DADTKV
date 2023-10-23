@@ -18,6 +18,9 @@ namespace DADTKV.transactionManager
         private int _timeSlot = 0;
         public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
 
+        private int _propagateId = 0;
+        public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
+
         private int _numSlot = 0;
         public int NumSlot { get { return _numSlot; } set { _numSlot = value; } }
 
@@ -44,13 +47,22 @@ namespace DADTKV.transactionManager
             set { lock (_leasesMissingLock) { _leasesMissing = value; } }
         }
 
-        private List<string> _leaseList = new List<string>();
+        private List<string> _leasesAvailable = new List<string>();
         private object _leaseListLock = new object();
 
-        public List<string> LeaseList
+        public List<string> LeasesAvailable
         {
-            get { lock (_leaseListLock) { return _leaseList; } }
-            set { lock (_leaseListLock) { _leaseList = value; } }
+            get { lock (_leaseListLock) { return _leasesAvailable; } }
+            set { lock (_leaseListLock) { _leasesAvailable = value; } }
+        }
+
+        private List<(string, string)> _sendTaks = new List<(string, string)>();
+        private object _sendTaksLock = new object();
+
+        public List<(string, string)> SendTaks
+        {
+            get { lock (_sendTaksLock) { return _sendTaks; } }
+            set { lock (_leaseListLock) { _sendTaks = value; } }
         }
 
         private List<Lease> _leaseSheet = new List<Lease>();
@@ -61,6 +73,9 @@ namespace DADTKV.transactionManager
             set { lock (_leaseSheetsLock) { _leaseSheet = value; } }
         }
 
+        private List<Lease> _propagateLeasesNeed = new List<Lease>();
+        public List<Lease> PropagateLeasesNeed { get { return _propagateLeasesNeed; } set { _propagateLeasesNeed = value; } }
+
         private int _numberLms;
 
         public int NumberLms { get { return _numberLms; } set { _numberLms = value; } }
@@ -68,11 +83,11 @@ namespace DADTKV.transactionManager
         private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
         public ManualResetEventSlim Signal { get { return _signal; } }
 
-        private Dictionary<string, ManualResetEventSlim> _transactionManagerSignals = new Dictionary<string, ManualResetEventSlim>();
+        private ManualResetEventSlim _transactionManagerSignal = new ManualResetEventSlim();
         private object _transactionManagerSignalsLock = new object();
-        public Dictionary<string, ManualResetEventSlim> TransactionManagerSignals
+        public ManualResetEventSlim TransactionManagerSignal
         {
-            get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignals; } }
+            get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignal; } }
         }
 
         private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
@@ -138,7 +153,6 @@ namespace DADTKV.transactionManager
                         roundsSuspected.Add(susList.Item1);
                     }
                 }
-                TransactionManagerSignals.Add(tm.Item1, new ManualResetEventSlim(false));
                 Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>> tuple
                     = new Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>(client, roundsSuspected);
 
@@ -190,7 +204,7 @@ namespace DADTKV.transactionManager
         {
             lock (_leaseListLock)
             {
-                return _leaseList.Contains(lease);
+                return _leasesAvailable.Contains(lease);
             }
         }
 
@@ -198,7 +212,7 @@ namespace DADTKV.transactionManager
         {
             lock (_leaseListLock)
             {
-                _leaseList.Add(lease);
+                _leasesAvailable.Add(lease);
             }
         }
 
@@ -206,7 +220,7 @@ namespace DADTKV.transactionManager
         {
             lock (_leaseListLock)
             {
-                _leaseList.Remove(lease);
+                _leasesAvailable.Remove(lease);
             }
         }
 
@@ -233,5 +247,27 @@ namespace DADTKV.transactionManager
                 _leaseSheet.Add(lease);
             }
         }
+
+        public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
+        {
+            PropagateLeasesRequest request = new PropagateLeasesRequest();
+            request.Lease.LeasedResources.AddRange(leaseResource);
+            request.Lease.TmId = tmIDtarget;
+            request.Id = PropagateId++;
+
+            // checks if any transaction manager can respond to it in this timeslot
+            lock (this)
+            {
+                foreach (var tm in TmsClients)
+                {
+                    if (!tm.Value.Item2.Contains(TimeSlot))
+                    {
+                        //if you dont suspect the tm at this timeslot you can ask for the leases
+                        tm.Value.Item1.PropagateLeasesAsync(request);
+                    }
+                }
+            }
+        }
+
     }
 }

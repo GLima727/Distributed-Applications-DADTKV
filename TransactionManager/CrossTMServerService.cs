@@ -5,6 +5,8 @@ namespace DADTKV.transactionManager
     class CrossTMServerService : CrossServerTransactionManagerService.CrossServerTransactionManagerServiceBase
     {
         private TransactionManager _transactionManager;
+        private int _lastPropagateId = 0;
+
 
         public CrossTMServerService(TransactionManager transactionManager)
         {
@@ -18,15 +20,43 @@ namespace DADTKV.transactionManager
 
         public PropagateLeasesReply PropagateLeasesImpl(PropagateLeasesRequest request)
         {
-            foreach (string lease in request.Leases)
+            if (request.Lease.TmId == _transactionManager.Id)
             {
-                _transactionManager.LeasesMissing.Remove(lease);
-                _transactionManager.AddLeaseToList(lease);
-            }
+                foreach (string resourceLease in request.Lease.LeasedResources)
+                {
+                    _transactionManager.RemoveLeaseToList(resourceLease);
+                    _transactionManager.AddLeaseToList(resourceLease);
+                }
 
-            if (_transactionManager.LeasesMissing.Count == 0)
+                if (_transactionManager.LeasesMissing.Count == 0)
+                {
+                    // implement queue
+                    _transactionManager.TransactionManagerSignal.Set();
+                }
+            }
+            else if (request.Id > _lastPropagateId)
             {
-                _transactionManager.TransactionManagerSignals[_transactionManager.Id].Set();
+                lock (this)
+                {
+                    _lastPropagateId++;
+                }
+
+                PropagateLeasesRequest progRequest = new PropagateLeasesRequest();
+                progRequest.Lease = request.Lease;
+                progRequest.Id = request.Id++;
+
+                // checks if any transaction manager can respond to it in this timeslot
+                lock (_transactionManager)
+                {
+                    foreach (var tm in _transactionManager.TmsClients)
+                    {
+                        if (!tm.Value.Item2.Contains(_transactionManager.TimeSlot))
+                        {
+                            //if you dont suspect the tm at this timeslot you can ask for the leases
+                            tm.Value.Item1.PropagateLeases(progRequest);
+                        }
+                    }
+                }
             }
 
 
