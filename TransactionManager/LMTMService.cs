@@ -32,8 +32,7 @@ namespace DADTKV.transactionManager
             _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
             DebugClass.Log("Sent signal to thread.");
-            _transactionManager.Signal.Set();
-
+            _transactionManager.TransactionQueue.Dequeue().Set();
             return new ReceiveLeaseListResponse();
         }
     }

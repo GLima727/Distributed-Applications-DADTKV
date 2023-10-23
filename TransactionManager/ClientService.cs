@@ -5,6 +5,7 @@ namespace DADTKV.transactionManager
     class ClientService : ClientServerService.ClientServerServiceBase
     {
         private TransactionManager _transactionManager;
+        private int _transactionCount = 0;
 
         public ClientService(TransactionManager transactionManager)
         {
@@ -23,6 +24,11 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
+            ManualResetEventSlim processSignal = new ManualResetEventSlim(false);
+            _transactionManager.TransactionQueue.Enqueue(processSignal);
+
+
+
             DebugClass.Log("Received transaction.");
             ClientTransactionReply reply = new ClientTransactionReply();
             if (TmIsDown())
@@ -59,9 +65,9 @@ namespace DADTKV.transactionManager
                 _transactionManager.NumberLms = 0;
                 DebugClass.Log("Sent lease requests.");
                 // Wait to receive lease sheet
-                _transactionManager.Signal.Wait();
+                processSignal.Wait();
                 DebugClass.Log("Received lease sheet.");
-                _transactionManager.Signal.Reset();
+                processSignal.Reset();
             }
 
             // send lms for the lease sheet but check if its down
@@ -75,7 +81,7 @@ namespace DADTKV.transactionManager
                 {
                     DebugClass.Log($"-----Received Lease {string.Join("-", lease.LeasedResources.ToList())}.");
                     // if is the first dont look back
-                    if (lease_index == 0)
+                    if (lease_index == 0 & _transactionManager.TimeSlot == 1)
                     {
                         DebugClass.Log($"-----I am the first to receive this Lease");
                         reply = executeOperations(request);
@@ -92,6 +98,7 @@ namespace DADTKV.transactionManager
                             _transactionManager.CrossTransactionManagerSignal.Wait();
                             _transactionManager.CrossTransactionManagerSignal.Reset();
                         }
+
                         reply = executeOperations(request);
                     }
 
@@ -111,6 +118,10 @@ namespace DADTKV.transactionManager
                     }
                     lease_index++;
                 }
+            }
+            if(_transactionManager.TransactionQueue.Count > 0)
+            {
+                _transactionManager.TransactionQueue.Dequeue().Set();
             }
             return reply;
         }
