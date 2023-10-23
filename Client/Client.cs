@@ -20,7 +20,7 @@ namespace DADTKV.client
 
         public List<Command> Commands { get { return _commands; } set { _commands = value; } }
 
-        public Client() {}
+        public Client() { }
 
         private List<ClientServerService.ClientServerServiceClient> _tmsChannels
             = new List<ClientServerService.ClientServerServiceClient>();
@@ -40,34 +40,27 @@ namespace DADTKV.client
 
         public void ParseAndExecuteCommands(ClientService clientServer)
         {
-            try
+            Commands = ScriptParser.ParseScript(Script);
+            foreach (Command command in Commands)
             {
-                Commands = ScriptParser.ParseScript(Script);
-                foreach (Command command in Commands)
+                switch (command)
                 {
-                    switch (command)
-                    {
-                        case TCommand:
-                            TCommand tCommand = (TCommand)command;
-                            DebugClass.Log(tCommand.ToString());
-                            clientServer.SubmitTransaction(tCommand.GetReadSet(), tCommand.GetWriteSet());
-                            break;
-                        case SCommand:
-                            SCommand sCommand = (SCommand)command;
-                            DebugClass.Log(sCommand.ToString());
-                            clientServer.Status();
-                            break;
-                        case WCommand:
-                            WCommand wCommand = (WCommand)command;
-                            DebugClass.Log(wCommand.ToString());
-                            Thread.Sleep(wCommand.GetWaitTime());
-                            break;
-                    }
+                    case TCommand:
+                        TCommand tCommand = (TCommand)command;
+                        DebugClass.Log(tCommand.ToString());
+                        clientServer.SubmitTransaction(tCommand.GetReadSet(), tCommand.GetWriteSet());
+                        break;
+                    case SCommand:
+                        SCommand sCommand = (SCommand)command;
+                        DebugClass.Log(sCommand.ToString());
+                        clientServer.Status();
+                        break;
+                    case WCommand:
+                        WCommand wCommand = (WCommand)command;
+                        DebugClass.Log(wCommand.ToString());
+                        Thread.Sleep(wCommand.GetWaitTime());
+                        break;
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Caught Exception: {ex.Message}");
             }
 
             if (Commands != null)

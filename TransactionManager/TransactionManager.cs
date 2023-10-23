@@ -90,12 +90,39 @@ namespace DADTKV.transactionManager
             get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignal; } }
         }
 
+        private Queue<ManualResetEventSlim> _transactionQueue = new Queue<ManualResetEventSlim>();
+        private object _transactionQueueLock = new object();
+        public Queue<ManualResetEventSlim> TransactionQueue
+        {
+            get { lock (_transactionQueueLock) { return _transactionQueue; } }
+            set { lock (_transactionQueueLock) { _transactionQueue = value; } }
+        }
+
+        private int _transactionID = 0;
+        private object _transactionIDLock = new object();
+
+        public int TransactionID
+        {
+            get { lock (_transactionIDLock) { return _transactionID;  } }
+            set { lock (_transactionIDLock) { _transactionID = value; } }
+        }
+
+
         private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
         private object _dadIntsLock = new object();
         public Dictionary<string, int> DadInts
         {
             get { lock (_dadIntsLock) { return _dadInts; } }
             set { lock (_dadIntsLock) { _dadInts = value; } }
+        }
+
+        private Dictionary<string, List<string>> _transactionsManagersLeases = new Dictionary<string, List<string>>();
+        private object _transactionsManagersLeasesLock = new object();
+
+        public Dictionary<string, List <string>> TransactionsManagersLeases
+        {
+            get { lock (_transactionsManagersLeasesLock) { return _transactionsManagersLeases; } }
+            set { lock (_transactionsManagersLeasesLock) { _transactionsManagersLeases = value; } }
         }
 
         //LM ID, Client
@@ -108,7 +135,7 @@ namespace DADTKV.transactionManager
             set { _lmsClients = value; }
         }
 
-        //TM ID, Client
+        // TM ID, Client
         private Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> _tmsClients
             = new Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>>();
 

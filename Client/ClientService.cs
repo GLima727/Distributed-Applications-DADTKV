@@ -19,7 +19,9 @@
         {
             Random rnd = new Random();
             int number = rnd.Next(0, _client.TmsChannels.Count);
-            return _client.TmsChannels[number];
+            if (_client.Id == "client2")
+                return _client.TmsChannels[1];
+            return _client.TmsChannels[0];
         }
 
         /// <summary>
@@ -41,7 +43,8 @@
                 request.WriteOperations.Add(dADInt);
             }
 
-            ClientTransactionReply reply = GetTransactionManager().SubmitTransaction(request);
+            var tm = GetTransactionManager();
+            var reply = tm.SubmitTransaction(request);
 
             foreach (int value in reply.ObjValues)
             {
