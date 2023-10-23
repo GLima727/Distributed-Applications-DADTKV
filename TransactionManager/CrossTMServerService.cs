@@ -24,13 +24,12 @@ namespace DADTKV.transactionManager
             {
                 foreach (string resourceLease in request.Lease.LeasedResources)
                 {
-                    _transactionManager.RemoveLeaseToList(resourceLease);
-                    _transactionManager.AddLeaseToList(resourceLease);
+                    _transactionManager.RemoveMissingLease(resourceLease);
+                    _transactionManager.AddLeaseToAvailableList(resourceLease);
                 }
 
                 if (_transactionManager.LeasesMissing.Count == 0)
                 {
-                    // implement queue
                     _transactionManager.TransactionManagerSignal.Set();
                 }
             }
@@ -38,12 +37,12 @@ namespace DADTKV.transactionManager
             {
                 lock (this)
                 {
-                    _lastPropagateId++;
+                    _lastPropagateId = request.Id;
                 }
 
                 PropagateLeasesRequest progRequest = new PropagateLeasesRequest();
                 progRequest.Lease = request.Lease;
-                progRequest.Id = request.Id++;
+                progRequest.Id = request.Id;
 
                 // checks if any transaction manager can respond to it in this timeslot
                 lock (_transactionManager)
