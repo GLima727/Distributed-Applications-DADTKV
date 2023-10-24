@@ -20,6 +20,7 @@
             }
             
             DebugClass.IsEnabled = true;
+            DebugClass.IsEnabled1 = true;
             tm.Start();
         }
     }

@@ -16,7 +16,12 @@ namespace DADTKV.transactionManager
         public int Port { get { return _port; } set { _port = value; } }
 
         private int _timeSlot = 0;
-        public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
+        private object _timeSlotLock = new object();
+        public int TimeSlot { get { lock (_timeSlotLock) { return _timeSlot; } } set { lock (_timeSlotLock) { _timeSlot = value; } } }
+
+        private int _nRound = 0;
+        private object _nRoundlock = new object();
+        public int NRound { get { lock (_nRoundlock) { return _nRound; } } set { lock (_nRoundlock) { _nRound = value; } } }
 
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
@@ -103,7 +108,7 @@ namespace DADTKV.transactionManager
 
         public int TransactionID
         {
-            get { lock (_transactionIDLock) { return _transactionID;  } }
+            get { lock (_transactionIDLock) { return _transactionID; } }
             set { lock (_transactionIDLock) { _transactionID = value; } }
         }
 
@@ -119,7 +124,7 @@ namespace DADTKV.transactionManager
         private Dictionary<string, List<string>> _transactionsManagersLeases = new Dictionary<string, List<string>>();
         private object _transactionsManagersLeasesLock = new object();
 
-        public Dictionary<string, List <string>> TransactionsManagersLeases
+        public Dictionary<string, List<string>> TransactionsManagersLeases
         {
             get { lock (_transactionsManagersLeasesLock) { return _transactionsManagersLeases; } }
             set { lock (_transactionsManagersLeasesLock) { _transactionsManagersLeases = value; } }
@@ -277,18 +282,23 @@ namespace DADTKV.transactionManager
 
         public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
         {
+            DebugClass.Log("Super flag");
             PropagateLeasesRequest request = new PropagateLeasesRequest();
+            request.Lease = new Lease();
             request.Lease.LeasedResources.AddRange(leaseResource);
             request.Lease.TmId = tmIDtarget;
-            request.Id = PropagateId++;
+            request.Id = ++PropagateId;
+            request.SenderId = Id;
 
+            DebugClass.Log("Super flag");
             // checks if any transaction manager can respond to it in this timeslot
             lock (this)
             {
                 foreach (var tm in TmsClients)
                 {
                     DebugClass.Log("-------------------------------------------------------");
-                    if (!tm.Value.Item2.Contains(TimeSlot))
+
+                    if (!tm.Value.Item2.Contains(TimeSlot) || tm.Key != Id)
                     {
                         DebugClass.Log($"-----Send leases to {tm.Key}");
                         DebugClass.Log($"-----Send leases to {tm.Value.Item2}");

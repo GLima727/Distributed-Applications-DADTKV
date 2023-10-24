@@ -20,8 +20,22 @@ namespace DADTKV.transactionManager
 
         public PropagateLeasesReply PropagateLeasesImpl(PropagateLeasesRequest request)
         {
+
+            DebugClass.Log("Received a Lease from progate.");
+            PropagateLeasesReply reply = new PropagateLeasesReply();
+            foreach (var tm in _transactionManager.TmsClients)
+            {
+                if (tm.Key == request.SenderId && tm.Value.Item2.Contains(_transactionManager.NRound))
+                {
+                    return reply;
+                }
+            }
+
+            DebugClass.Log("And i dont ignore");
+
             if (request.Lease.TmId == _transactionManager.Id)
             {
+                DebugClass.Log("---- The Lease is for me :).");
                 foreach (string resourceLease in request.Lease.LeasedResources)
                 {
                     _transactionManager.RemoveMissingLease(resourceLease);
@@ -30,11 +44,13 @@ namespace DADTKV.transactionManager
 
                 if (_transactionManager.LeasesMissing.Count == 0)
                 {
+                    DebugClass.Log("---- We have all lets gooooo.");
                     _transactionManager.TransactionManagerSignal.Set();
                 }
             }
             else if (request.Id > _lastPropagateId)
             {
+                DebugClass.Log("---- The Lease is not for me :_.");
                 lock (this)
                 {
                     _lastPropagateId = request.Id;
@@ -43,6 +59,7 @@ namespace DADTKV.transactionManager
                 PropagateLeasesRequest progRequest = new PropagateLeasesRequest();
                 progRequest.Lease = request.Lease;
                 progRequest.Id = request.Id;
+                progRequest.SenderId = _transactionManager.Id;
 
                 // checks if any transaction manager can respond to it in this timeslot
                 lock (_transactionManager)
@@ -58,8 +75,6 @@ namespace DADTKV.transactionManager
                 }
             }
 
-
-            PropagateLeasesReply reply = new PropagateLeasesReply();
             return reply;
         }
 

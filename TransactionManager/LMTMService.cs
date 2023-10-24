@@ -37,13 +37,15 @@ namespace DADTKV.transactionManager
                     return new ReceiveLeaseListResponse();
                 }
 
-                DebugClass.Log("Learnet.");
+                DebugClass.Log1("Learnet.");
                 _lastLeaseId = request.RequestId;
             }
 
+            _transactionManager.NRound += 1;
+
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
 
-            DebugClass.Log("Check if it does to send resources from the least round.");
+            DebugClass.Log("Check if it does to send resources from the last round.");
             foreach (var resource in _transactionManager.LeasesAvailable)
             {
                 foreach (var lease in request.LeaseList.Leases.ToList())

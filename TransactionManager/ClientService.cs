@@ -42,7 +42,7 @@ namespace DADTKV.transactionManager
                     DebugClass.Log($"-----Doesn't have lease {readOp}.");
                     _transactionManager.AddMissingLease(readOp);
                 }
-
+                // adfjjfdsajfd
             }
 
             DebugClass.Log("Check for write transactions.");
@@ -65,61 +65,64 @@ namespace DADTKV.transactionManager
                 processSignal.Wait();
                 DebugClass.Log("Received lease sheet.");
                 processSignal.Reset();
-            }
+                // send lms for the lease sheet but check if its down
+                int lease_index = 0;
 
-            // send lms for the lease sheet but check if its down
-            int lease_index = 0;
-            
-            // For each Lease i received
-            foreach (Lease lease in _transactionManager.LeaseSheet)
-            {
-                // Check if this lease is for this tmId
-                if (lease.TmId == _transactionManager.Id)
+                // For each Lease i received
+                foreach (Lease lease in _transactionManager.LeaseSheet)
                 {
-                    DebugClass.Log($"-----Received Lease {string.Join("-", lease.LeasedResources.ToList())}.");
-                    // if is the first dont look back
-                    if (lease_index == 0 & _transactionManager.TimeSlot == 1)
+                    // Check if this lease is for this tmId
+                    if (lease.TmId == _transactionManager.Id)
                     {
-                        _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
-                        _transactionManager.LeasesMissing = new List<string>();
-                        DebugClass.Log($"-----I am the first to receive this Lease");
-                        reply = executeOperations(request);
-          
-                    }
-                    else
-                    {
-                        DebugClass.Log($"-----Check if I am missing leases");
-                        lookBackLeases(lease, lease_index);
-                        if (_transactionManager.LeasesMissing.Count != 0)
+                        // if is the first dont look back
+                        if (lease_index == 0 && _transactionManager.NRound == 1)
                         {
-                            DebugClass.Log($"-----I am missing leases");
-                            // Wait for lease
-                            _transactionManager.TransactionManagerSignal.Wait();
-                            _transactionManager.TransactionManagerSignal.Reset();
+                            _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
+                            _transactionManager.LeasesMissing = new List<string>();
+                            DebugClass.Log1($"-----I am the first to receive this Lease");
+                            reply = executeOperations(request);
+
                         }
-                        reply = executeOperations(request);
-                    }
-
-                    // Send Leases to anyone who needs it
-                    DebugClass.Log($"-----Send leases");
-                    Dictionary<string, List<string>> leasesToSend = lookAheadLeases(lease, lease_index);
-                    foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
-                    {
-                        //im checking the suspicion list inside this
-                        //here you ask for leases but dont send the request if you suspect the one you are asking
-                        _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
-
-                        // remove A from ("A","B") and so on
-                        foreach (string resource in leases.Value)
+                        else
                         {
-                            _transactionManager.RemoveLeaseFromAvailableList(resource);
+                            DebugClass.Log1($"-----Check if I am missing leases");
+                            lookBackLeases(lease, lease_index);
+                            if (_transactionManager.LeasesMissing.Count != 0)
+                            {
+                                DebugClass.Log1($"-----I am missing leases");
+                                // Wait for lease
+                                _transactionManager.TransactionManagerSignal.Wait();
+                                _transactionManager.TransactionManagerSignal.Reset();
+                            }
+                            reply = executeOperations(request);
+                        }
+
+                        // Send Leases to anyone who needs it
+                        DebugClass.Log($"-----Send leases");
+                        Dictionary<string, List<string>> leasesToSend = lookAheadLeases(lease, lease_index);
+                        foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
+                        {
+                            //im checking the suspicion list inside this
+                            //here you ask for leases but dont send the request if you suspect the one you are asking
+                            _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
+
+                            // remove A from ("A","B") and so on
+                            foreach (string resource in leases.Value)
+                            {
+                                _transactionManager.RemoveLeaseFromAvailableList(resource);
+                            }
                         }
                     }
                     lease_index++;
                 }
             }
+            else
+            {
+                reply = executeOperations(request);
+            }
 
-            if(_transactionManager.TransactionQueue.Count > 0)
+
+            if (_transactionManager.TransactionQueue.Count > 0)
             {
                 _transactionManager.TransactionQueue.Dequeue().Set();
             }
@@ -133,17 +136,24 @@ namespace DADTKV.transactionManager
             {
                 for (int i = lease_index + 1; i < _transactionManager.LeaseSheet.Count; i++)
                 {
-
-                    if (_transactionManager.LeaseSheet[i].TmId != _transactionManager.Id
-                            && _transactionManager.LeaseSheet[i].TmId.Contains(resource))
+                    if (_transactionManager.LeaseSheet[i].LeasedResources.Contains(resource))
                     {
-                        // atencao verificar se ele nao esta a criar ids repetidos no dicionario
-                        leasesToSend[_transactionManager.LeaseSheet[i].TmId].Add(resource);
+                        if (_transactionManager.LeaseSheet[i].TmId != _transactionManager.Id)
+                        {
+                            DebugClass.Log($"adjfsjafdjjdf");
+                            // atencao verificar se ele nao esta a criar ids repetidos no dicionario
+                            if (!leasesToSend.ContainsKey(_transactionManager.LeaseSheet[i].TmId))
+                            {
+                                leasesToSend[_transactionManager.LeaseSheet[i].TmId] = new List<string>();
+                            }
+                            leasesToSend[_transactionManager.LeaseSheet[i].TmId].Add(resource);
+                        }
                         break;
                     }
                 }
 
             }
+
             return leasesToSend;
         }
 
