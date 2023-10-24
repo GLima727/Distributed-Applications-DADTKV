@@ -5,7 +5,6 @@ namespace DADTKV.transactionManager
     class ClientService : ClientServerService.ClientServerServiceBase
     {
         private TransactionManager _transactionManager;
-        private int _transactionCount = 0;
 
         public ClientService(TransactionManager transactionManager)
         {
@@ -81,10 +80,11 @@ namespace DADTKV.transactionManager
                     // if is the first dont look back
                     if (lease_index == 0 & _transactionManager.TimeSlot == 1)
                     {
-                        DebugClass.Log($"-----I am the first to receive this Lease");
-                        reply = executeOperations(request);
                         _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
                         _transactionManager.LeasesMissing = new List<string>();
+                        DebugClass.Log($"-----I am the first to receive this Lease");
+                        reply = executeOperations(request);
+          
                     }
                     else
                     {
@@ -92,11 +92,11 @@ namespace DADTKV.transactionManager
                         lookBackLeases(lease, lease_index);
                         if (_transactionManager.LeasesMissing.Count != 0)
                         {
+                            DebugClass.Log($"-----I am missing leases");
                             // Wait for lease
                             _transactionManager.TransactionManagerSignal.Wait();
                             _transactionManager.TransactionManagerSignal.Reset();
                         }
-
                         reply = executeOperations(request);
                     }
 
@@ -112,7 +112,7 @@ namespace DADTKV.transactionManager
                         // remove A from ("A","B") and so on
                         foreach (string resource in leases.Value)
                         {
-                            _transactionManager.RemoveLeaseToList(resource);
+                            _transactionManager.RemoveLeaseFromAvailableList(resource);
                         }
                     }
                     lease_index++;

@@ -21,10 +21,10 @@
             int number = rnd.Next(0, _client.TmsChannels.Count);
             if (_client.Id == "client1")
                 return _client.TmsChannels[0];
-            else if (_client.Id == "client2")
-                return _client.TmsChannels[1];
-            else
-                return _client.TmsChannels[2];
+            //else if (_client.Id == "client2")
+            //    return _client.TmsChannels[1];
+            //else
+            return _client.TmsChannels[1];
         }
 
         /// <summary>

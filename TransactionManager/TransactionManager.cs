@@ -243,7 +243,7 @@ namespace DADTKV.transactionManager
             }
         }
 
-        public void RemoveLeaseToList(string lease)
+        public void RemoveLeaseFromAvailableList(string lease)
         {
             lock (_leaseListLock)
             {
@@ -287,8 +287,11 @@ namespace DADTKV.transactionManager
             {
                 foreach (var tm in TmsClients)
                 {
+                    DebugClass.Log("-------------------------------------------------------");
                     if (!tm.Value.Item2.Contains(TimeSlot))
                     {
+                        DebugClass.Log($"-----Send leases to {tm.Key}");
+                        DebugClass.Log($"-----Send leases to {tm.Value.Item2}");
                         //if you dont suspect the tm at this timeslot you can ask for the leases
                         tm.Value.Item1.PropagateLeasesAsync(request);
                     }
