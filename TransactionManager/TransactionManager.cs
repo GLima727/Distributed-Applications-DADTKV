@@ -16,7 +16,13 @@ namespace DADTKV.transactionManager
         public int Port { get { return _port; } set { _port = value; } }
 
         private int _timeSlot = 0;
-        public int TimeSlot { get { return _timeSlot; } set { _timeSlot = value; } }
+
+        private object _timeSlotLock = new object();
+        public int TimeSlot
+        {
+            get { lock (_timeSlotLock) { return _timeSlot; } }
+            set { lock (_timeSlotLock) { _timeSlot = value; } }
+        }
 
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
@@ -116,10 +122,10 @@ namespace DADTKV.transactionManager
             set { lock (_dadIntsLock) { _dadInts = value; } }
         }
 
-        private Dictionary<string, List<string>> _transactionsManagersLeases = new Dictionary<string, List<string>>();
+        private Dictionary<string, Tuple<string, string>> _transactionsManagersLeases = new Dictionary<string, Tuple<string,string>>();
         private object _transactionsManagersLeasesLock = new object();
 
-        public Dictionary<string, List <string>> TransactionsManagersLeases
+        public Dictionary<string, Tuple<string, string>> TransactionsManagersLeases
         {
             get { lock (_transactionsManagersLeasesLock) { return _transactionsManagersLeases; } }
             set { lock (_transactionsManagersLeasesLock) { _transactionsManagersLeases = value; } }
@@ -144,6 +150,22 @@ namespace DADTKV.transactionManager
             get { return _tmsClients; }
             set { _tmsClients = value; }
         }
+
+        private List<int> _numAliveProcesses;
+        public List<int> NumAliveProcesses
+        {
+            get { return _numAliveProcesses; }
+            set { _numAliveProcesses = value; }
+        }
+
+        private List<string> _acksReceived = new List<string>();
+        private object _acksReceivedLock = new object();
+        public List<string> AcksReceived
+        {
+            get { lock (_acksReceivedLock) { return _acksReceived; } }
+            set { lock (_acksReceivedLock) { _acksReceived = value; } }
+        }
+
 
         public TransactionManager()
         {
@@ -201,7 +223,6 @@ namespace DADTKV.transactionManager
         public void Start()
         {
             DebugClass.Log($"Start Transaction Manager {_id}.");
-
             ServerPort serverPort = new ServerPort(_url, _port, ServerCredentials.Insecure);
             Server server = new Server
             {

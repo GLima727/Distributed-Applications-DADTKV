@@ -23,6 +23,10 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
+            foreach(KeyValuePair<string,int> dad in _transactionManager.DadInts)
+            {
+                DebugClass.Log($"-------memory:{dad.Key},{dad.Value}");
+            }
             ManualResetEventSlim processSignal = new ManualResetEventSlim(false);
             _transactionManager.TransactionQueue.Enqueue(processSignal);
 
@@ -56,6 +60,18 @@ namespace DADTKV.transactionManager
                 }
             }
 
+            List<DADIntCopy> updatedDadIntList = new List<DADIntCopy>();
+
+            foreach (DADInt dadInt in request.WriteOperations)
+            {
+                DebugClass.Log("adding to memory to send.");
+
+                DADIntCopy copy = new DADIntCopy();
+                copy.Key = dadInt.Key;
+                copy.Value = dadInt.Value;
+                updatedDadIntList.Add(copy);
+            }
+
             if (_transactionManager.LeasesMissing.Count != 0)
             {
                 RequestLeases();
@@ -66,6 +82,7 @@ namespace DADTKV.transactionManager
                 DebugClass.Log("Received lease sheet.");
                 processSignal.Reset();
             }
+            //URBroadCastMemory(updatedDadIntList);
 
             // send lms for the lease sheet but check if its down
             int lease_index = 0;
@@ -78,7 +95,7 @@ namespace DADTKV.transactionManager
                 {
                     DebugClass.Log($"-----Received Lease {string.Join("-", lease.LeasedResources.ToList())}.");
                     // if is the first dont look back
-                    if (lease_index == 0 & _transactionManager.TimeSlot == 1)
+                    if (lease_index == 0)
                     {
                         _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
                         _transactionManager.LeasesMissing = new List<string>();
@@ -109,6 +126,13 @@ namespace DADTKV.transactionManager
                         //here you ask for leases but dont send the request if you suspect the one you are asking
                         _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
 
+                        //notify himself (the sender) and update leases possession
+                        foreach (string partOfLease in leases.Value)
+                        {
+                            Tuple<string, string> senderAndReceiver = new Tuple<string, string>(_transactionManager.Id, leases.Key);
+                            _transactionManager.TransactionsManagersLeases.Add(partOfLease, senderAndReceiver);
+                        }
+
                         // remove A from ("A","B") and so on
                         foreach (string resource in leases.Value)
                         {
@@ -119,7 +143,7 @@ namespace DADTKV.transactionManager
                 }
             }
 
-            if(_transactionManager.TransactionQueue.Count > 0)
+            if (_transactionManager.TransactionQueue.Count > 0)
             {
                 _transactionManager.TransactionQueue.Dequeue().Set();
             }
@@ -149,6 +173,8 @@ namespace DADTKV.transactionManager
 
         public void lookBackLeases(Lease lease, int lease_index)
         {
+            int checkInTmsLeasesFlag = 1;
+
             foreach (string resource in lease.LeasedResources)
             {
                 List<string> leases = new List<string>();
@@ -158,11 +184,24 @@ namespace DADTKV.transactionManager
                             && _transactionManager.LeaseSheet[i].LeasedResources.Contains(resource))
                     {
                         leases.Add(resource);
+                        checkInTmsLeasesFlag = 0;
                         break;
                     }
                 }
+
+                if(checkInTmsLeasesFlag == 1)
+                {
+                    if (_transactionManager.TransactionsManagersLeases.ContainsKey(resource))
+                    {
+                        leases.Add(resource);
+                    }
+
+                }
+
+
                 _transactionManager.LeasesMissing = leases;
             }
+
         }
 
         public ClientTransactionReply executeOperations(ClientTransactionRequest request)
@@ -172,6 +211,7 @@ namespace DADTKV.transactionManager
             // Execute reading operations.
             foreach (string readOp in request.ReadOperations)
             {
+
                 if (!_transactionManager.DadInts.ContainsKey(readOp))
                 {
                     DebugClass.Log($"Reading {readOp} - NULL");
@@ -217,6 +257,29 @@ namespace DADTKV.transactionManager
             }
 
             Task.WhenAll(tasks);
+            
+            _transactionManager.TimeSlot++;
+        }
+
+        public void URBroadCastMemory(List<DADIntCopy> message)
+        {
+            foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
+                in _transactionManager.TmsClients)
+            {
+                //if tmClient == alive?
+                URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
+
+                foreach (DADIntCopy m in message)
+                {
+                    DebugClass.Log($"DAdiNT {m}");
+
+                }
+
+                urbroadcastRequest.Sender = _transactionManager.Id;
+                urbroadcastRequest.Message.AddRange(message);
+                urbroadcastRequest.TimeStamp = _transactionManager.TimeSlot;
+                tm.Value.Item1.URBroadCast(urbroadcastRequest);
+            }
         }
     }
 }

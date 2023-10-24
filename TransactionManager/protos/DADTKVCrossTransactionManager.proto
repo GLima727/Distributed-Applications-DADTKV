@@ -11,6 +11,22 @@ message PropagateLeasesRequest {
 
 message PropagateLeasesReply {}
 
+message URBroadCastRequest {
+	string sender = 1;
+	repeated DADIntCopy message = 2;
+	int32 timeStamp = 3;
+}
+
+message URBroadCastReply {
+	int32 ack = 1;
+}
+
+message DADIntCopy {
+	string key = 1;
+	int32 value = 2;
+}
+
 service CrossServerTransactionManagerService {
-  rpc PropagateLeases(PropagateLeasesRequest) returns (PropagateLeasesReply);
+	rpc PropagateLeases (PropagateLeasesRequest) returns (PropagateLeasesReply);
+	rpc URBroadCast (URBroadCastRequest) returns (URBroadCastReply);
 }
