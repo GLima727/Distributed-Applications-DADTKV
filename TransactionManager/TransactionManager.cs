@@ -95,12 +95,20 @@ namespace DADTKV.transactionManager
             get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignal; } }
         }
 
-        private Queue<ManualResetEventSlim> _transactionQueue = new Queue<ManualResetEventSlim>();
-        private object _transactionQueueLock = new object();
-        public Queue<ManualResetEventSlim> TransactionQueue
+        private TransactionInfo _currentTrans = new TransactionInfo();
+        private object _currentTransLock = new object();
+        public TransactionInfo CurrentTrans
         {
-            get { lock (_transactionQueueLock) { return _transactionQueue; } }
-            set { lock (_transactionQueueLock) { _transactionQueue = value; } }
+            get { lock (_currentTransLock) { return _currentTrans; } }
+            set { lock (_currentTransLock) { _currentTrans = value; } }
+        }
+
+        private Queue<TransactionInfo> _transactionInfoQueue = new Queue<TransactionInfo>();
+        private object _transactionQueueInfoLock = new object();
+        public Queue<TransactionInfo> TransactionQueueInfo
+        {
+            get { lock (_transactionQueueInfoLock) { return _transactionInfoQueue; } }
+            set { lock (_transactionQueueInfoLock) { _transactionInfoQueue = value; } }
         }
 
         private int _transactionID = 0;
@@ -310,7 +318,7 @@ namespace DADTKV.transactionManager
             {
                 foreach (var tm in TmsClients)
                 {
-                    if (!tm.Value.Item2.Contains(TimeSlot) && tm.Key != Id)
+                    if (!tm.Value.Item2.Contains(TimeSlot) && (tm.Key != Id || tmIDtarget == Id))
                     {
                         DebugClass.Log($"[Propagate Lease tm function] send lease {tm.Key} {tm.Value.Item2}");
                         //if you dont suspect the tm at this timeslot you can ask for the leases

@@ -20,7 +20,21 @@ namespace DADTKV.transactionManager
 
         public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
+            bool flag = false;
             DebugClass.Log("[LM - TM] Received a lease sheet.");
+            foreach (var l in request.LeaseList.Leases.ToList())
+            {
+                if (l.TmId == _transactionManager.Id)
+                {
+                    flag = true;
+                }
+            }
+
+            if (!flag)
+            {
+                return new ReceiveLeaseListResponse();
+            }
+
             lock (this)
             {
                 if (_lastLeaseId >= request.RequestId)
@@ -73,7 +87,8 @@ namespace DADTKV.transactionManager
             _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
             DebugClass.Log("[LM - TM] Sent signal to thread.");
-            _transactionManager.TransactionQueue.Dequeue().Set();
+            _transactionManager.CurrentTrans = _transactionManager.TransactionQueueInfo.Dequeue();
+            _transactionManager.CurrentTrans.SignalLSheet.Set();
             return new ReceiveLeaseListResponse();
         }
     }

@@ -93,18 +93,31 @@ namespace DADTKV.transactionManager
             DebugClass.Log($"[Propagate Lease] I dont ignore.");
             if (request.Lease.TmId == _transactionManager.Id)
             {
-                DebugClass.Log($"[Propagate Lease] The Lease is for me :).");
-                foreach (string resourceLease in request.Lease.LeasedResources)
+                try
                 {
-                    _transactionManager.RemoveMissingLease(resourceLease);
-                    _transactionManager.AddLeaseToAvailableList(resourceLease);
+                    DebugClass.Log("[Propagate Lease] The Lease is for me :).");
+                    foreach (string resourceLease in request.Lease.LeasedResources)
+                    {
+                        _transactionManager.CurrentTrans.MissingLeases.Remove(resourceLease);
+                        _transactionManager.AddLeaseToAvailableList(resourceLease);
+                    }
+
+                    if (_transactionManager.CurrentTrans.MissingLeases.Count == 0)
+                    {
+                        DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
+                        _transactionManager.CurrentTrans.SignalLTM.Set();
+                    }
+                    DebugClass.Log($"[Propagate Lease] We don't have all.");
+                    foreach (var a in _transactionManager.CurrentTrans.MissingLeases)
+                    {
+                        DebugClass.Log($"[Propagate Lease] Missing {a}.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    DebugClass.Log(e.Message);
                 }
 
-                if (_transactionManager.LeasesMissing.Count == 0)
-                {
-                    DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
-                    _transactionManager.TransactionManagerSignal.Set();
-                }
             }
             else if (request.Id > _lastPropagateId)
             {

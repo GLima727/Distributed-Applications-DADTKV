@@ -2,6 +2,66 @@
 
 namespace DADTKV.transactionManager
 {
+    class TransactionInfo
+    {
+        List<string> missingLeases = new List<string>();
+        public List<string> MissingLeases
+        {
+            get
+            {
+                lock (this)
+                {
+                    return missingLeases;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    missingLeases = value;
+                }
+            }
+        }
+
+        ManualResetEventSlim signalLSheet = new ManualResetEventSlim(false);
+        public ManualResetEventSlim SignalLSheet
+        {
+            get
+            {
+                lock (this)
+                {
+                    return signalLSheet;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    signalLSheet = value;
+                }
+            }
+        }
+
+        ManualResetEventSlim signalLTM = new ManualResetEventSlim(false);
+        public ManualResetEventSlim SignalLTM
+        {
+            get
+            {
+                lock (this)
+                {
+                    return signalLTM;
+                }
+            }
+            set
+            {
+                lock (this)
+                {
+                    signalLTM = value;
+                }
+            }
+        }
+    }
+
     class ClientService : ClientServerService.ClientServerServiceBase
     {
         private TransactionManager _transactionManager;
@@ -42,8 +102,9 @@ namespace DADTKV.transactionManager
                 DebugClass.Log2($"[SubmitTransactionImpl] [DadInts present in memory] <{dad.Key},{dad.Value}>");
             }
 
-            ManualResetEventSlim processSignal = new ManualResetEventSlim(false);
-            _transactionManager.TransactionQueue.Enqueue(processSignal);
+            var info = new TransactionInfo();
+            _transactionManager.TransactionQueueInfo.Enqueue(info);
+            DebugClass.Log($"[SubmitTransactionImpl] {_transactionManager.TransactionQueueInfo.Count}.");
 
             ClientTransactionReply reply = new ClientTransactionReply();
             if (TmIsDown())
@@ -59,7 +120,7 @@ namespace DADTKV.transactionManager
                 if (!_transactionManager.ContainsLease(readOp))
                 {
                     DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] doesn't have {readOp}.");
-                    _transactionManager.AddMissingLease(readOp);
+                    info.MissingLeases.Add(readOp);
                 }
             }
 
@@ -69,29 +130,31 @@ namespace DADTKV.transactionManager
                 DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] Needs to access {dadInt.Key}.");
                 if (!_transactionManager.ContainsLease(dadInt.Key))
                 {
-                    _transactionManager.AddMissingLease(dadInt.Key);
+                    info.MissingLeases.Add(dadInt.Key);
                     DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] doesn't have {dadInt.Key}.");
                 }
             }
 
 
-            DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] missing {_transactionManager.LeasesMissing.Count} leases");
-            if (_transactionManager.LeasesMissing.Count != 0)
+            DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] missing {info.MissingLeases.Count} leases");
+            if (info.MissingLeases.Count != 0)
             {
-                RequestLeases(_transactionManager.LeasesMissing, currentTransId);
+                RequestLeases(info.MissingLeases, currentTransId);
 
                 _transactionManager.NumberLms = 0;
                 DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] Sent lease requests.");
                 // Wait to receive lease sheet
-                processSignal.Wait();
+                info.SignalLSheet.Wait();
                 DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] Received lease sheet.");
-                processSignal.Reset();
+                info.SignalLSheet.Reset();
+
+                List<Lease> leaseSheet = _transactionManager.LeaseSheet;
                 // send lms for the lease sheet but check if its down
 
                 int lease_index = 0;
 
                 // For each Lease i received
-                foreach (Lease lease in _transactionManager.LeaseSheet)
+                foreach (Lease lease in leaseSheet)
                 {
                     // Check if this lease is for this tmId
                     if (lease.TmId == _transactionManager.Id && lease.TransactionId == currentTransId)
@@ -99,36 +162,41 @@ namespace DADTKV.transactionManager
                         // if is the first dont look back
                         if (lease_index == 0 && _transactionManager.NRound == 1)
                         {
-                            _transactionManager.LeasesAvailable = _transactionManager.LeasesMissing;
-                            _transactionManager.LeasesMissing = new List<string>();
+                            _transactionManager.LeasesAvailable = info.MissingLeases;
                             DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] I was the first to receive this lease.");
                         }
                         else
                         {
                             // check if someone have the leases we need
-                            _transactionManager.LeasesMissing = lookBackLeases(lease, lease_index);
-                            foreach (var l in _transactionManager.LeasesMissing)
+                            var missingLeases = lookBackLeases(lease, lease_index, leaseSheet);
+                            var leases_to_add = info.MissingLeases.Except(missingLeases).ToList();
+                            info.MissingLeases = missingLeases;
+
+                            foreach (var l in leases_to_add)
+                            {
+                                if (!_transactionManager.LeasesAvailable.Contains(l))
+                                    _transactionManager.LeasesAvailable.Add(l);
+                            }
+
+                            foreach (var l in info.MissingLeases)
                             {
                                 DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] [Solve missing leases] missing {l}");
                             }
 
-                            if (_transactionManager.LeasesMissing.Count != 0)
+                            if (info.MissingLeases.Count != 0)
                             {
                                 DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] we need to wait to get leases from others tms");
                                 // Wait for others tm to give leases
-                                _transactionManager.TransactionManagerSignal.Wait();
-                                _transactionManager.TransactionManagerSignal.Reset();
+                                info.SignalLTM.Wait();
+                                info.SignalLTM.Reset();
                             }
                         }
 
                         reply = executeOperations(request);
 
-                        // Propagate WriteOperations
-                        _transactionManager.URBroadCastMemory(request.WriteOperations.ToList());
-
                         // Send Leases to anyone who needs it
                         DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] [Send leases]");
-                        Dictionary<string, List<string>> leasesToSend = lookAheadLeases(lease, lease_index);
+                        Dictionary<string, List<string>> leasesToSend = lookAheadLeases(lease, lease_index, leaseSheet);
                         foreach (KeyValuePair<string, List<string>> leases in leasesToSend)
                         {
                             DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] [Solve missing leases] [Send leases] sending {leases.Key}");
@@ -154,37 +222,34 @@ namespace DADTKV.transactionManager
             {
                 DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] perform transaction");
                 reply = executeOperations(request);
-
-                // Propagate WriteOperations
-                _transactionManager.URBroadCastMemory(request.WriteOperations.ToList());
             }
 
             DebugClass.Log($"[SubmitTransactionImpl] pass to the next in queue");
-            if (_transactionManager.TransactionQueue.Count > 0)
+            if (_transactionManager.TransactionQueueInfo.Count > 0)
             {
-                _transactionManager.TransactionQueue.Dequeue().Set();
+                _transactionManager.TransactionQueueInfo.Dequeue().SignalLSheet.Set();
             }
 
             return reply;
         }
 
-        public Dictionary<string, List<string>> lookAheadLeases(Lease lease, int lease_index)
+        public Dictionary<string, List<string>> lookAheadLeases(Lease lease, int lease_index, List<Lease> leaseSheet)
         {
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
             foreach (string resource in lease.LeasedResources)
             {
-                for (int i = lease_index + 1; i < _transactionManager.LeaseSheet.Count; i++)
+                for (int i = lease_index + 1; i < leaseSheet.Count; i++)
                 {
-                    if (_transactionManager.LeaseSheet[i].LeasedResources.Contains(resource))
+                    if (leaseSheet[i].LeasedResources.Contains(resource))
                     {
-                        if (_transactionManager.LeaseSheet[i].TmId != _transactionManager.Id)
+                        if (leaseSheet[i].TmId != _transactionManager.Id)
                         {
                             // atencao verificar se ele nao esta a criar ids repetidos no dicionario
-                            if (!leasesToSend.ContainsKey(_transactionManager.LeaseSheet[i].TmId))
+                            if (!leasesToSend.ContainsKey(leaseSheet[i].TmId))
                             {
-                                leasesToSend[_transactionManager.LeaseSheet[i].TmId] = new List<string>();
+                                leasesToSend[leaseSheet[i].TmId] = new List<string>();
                             }
-                            leasesToSend[_transactionManager.LeaseSheet[i].TmId].Add(resource);
+                            leasesToSend[leaseSheet[i].TmId].Add(resource);
                         }
                         break;
                     }
@@ -195,18 +260,24 @@ namespace DADTKV.transactionManager
             return leasesToSend;
         }
 
-        public List<string> lookBackLeases(Lease lease, int lease_index)
+        public List<string> lookBackLeases(Lease lease, int lease_index, List<Lease> leaseSheet)
         {
             List<string> missingLeases = new List<string>();
+
             // for each resource we want
+            // A B
+            DebugClass.Log("[LookBack]");
             foreach (string resource in lease.LeasedResources)
             {
+                DebugClass.Log($"[LookBack] {resource}");
                 // we look for the back to see if someone have the lease we need  
                 for (int i = lease_index - 1; i >= 0; i--)
                 {
-                    if (_transactionManager.LeaseSheet[i].TmId != _transactionManager.Id
-                            && _transactionManager.LeaseSheet[i].LeasedResources.Contains(resource))
+                    DebugClass.Log($"[LookBack] {lease_index}");
+                    if (leaseSheet[i].TmId != _transactionManager.Id
+                            && leaseSheet[i].LeasedResources.Contains(resource))
                     {
+                        DebugClass.Log($"[LookBack] added {resource}");
                         missingLeases.Add(resource);
                         break;
                     }
@@ -231,10 +302,18 @@ namespace DADTKV.transactionManager
                 }
             }
 
+
             // Execute writting operations.
             foreach (DADInt dadInt in request.WriteOperations)
             {
                 _transactionManager.DadInts[dadInt.Key] = dadInt.Value;
+            }
+
+            if (request.WriteOperations.ToList().Count() != 0)
+            {
+
+                // Propagate WriteOperations
+                _transactionManager.URBroadCastMemory(request.WriteOperations.ToList());
             }
             return reply;
         }
