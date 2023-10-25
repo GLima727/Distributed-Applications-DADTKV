@@ -27,7 +27,7 @@ namespace DADTKV.transactionManager
             }
             else
             {
-                DebugClass.Log($"Receiving");
+                DebugClass.Log("[URBroadCast Server]");
 
                 //se nao tiver recebido deste já
                 if (!_transactionManager.AcksReceived.Contains(request.Sender))
@@ -37,16 +37,16 @@ namespace DADTKV.transactionManager
                     if (_transactionManager.AcksReceived.Count < _transactionManager.TmsClients.Count / 2 + 1)
                     {
                         //update values in replica
-                        foreach (DADIntCopy message in request.Message)
+                        foreach (DADInt message in request.Message)
                         {
-                            DebugClass.Log($"está a mudar {message.Value}{message.Key}");
+                            DebugClass.Log($"[URBroadCast Server] change memory to {message.Value} {message.Key}");
 
                             _transactionManager.DadInts[message.Key] = message.Value;
                         }
                     }
                     if (_transactionManager.AcksReceived.Count == 1)
                     {
-                        DebugClass.Log($"Receiving DAdiNTs");
+                        DebugClass.Log("[URBroadCast Server] Receiving DAdiNTs");
 
                         //transmite para os outros apenas uma vez
                         foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
@@ -65,11 +65,8 @@ namespace DADTKV.transactionManager
                             tm.Value.Item1.URBroadCast(urbroadcastRequest);
                         }
                     }
-
                 }
             }
-
-
 
             URBroadCastReply reply = new URBroadCastReply();
             return reply;
@@ -83,7 +80,7 @@ namespace DADTKV.transactionManager
         public PropagateLeasesReply PropagateLeasesImpl(PropagateLeasesRequest request)
         {
 
-            DebugClass.Log("Received a Lease from progate.");
+            DebugClass.Log($"[Propagate Lease] received a lease.");
             PropagateLeasesReply reply = new PropagateLeasesReply();
             foreach (var tm in _transactionManager.TmsClients)
             {
@@ -93,11 +90,10 @@ namespace DADTKV.transactionManager
                 }
             }
 
-            DebugClass.Log("And i dont ignore");
-
+            DebugClass.Log($"[Propagate Lease] I dont ignore.");
             if (request.Lease.TmId == _transactionManager.Id)
             {
-                DebugClass.Log("---- The Lease is for me :).");
+                DebugClass.Log($"[Propagate Lease] The Lease is for me :).");
                 foreach (string resourceLease in request.Lease.LeasedResources)
                 {
                     _transactionManager.RemoveMissingLease(resourceLease);
@@ -106,13 +102,13 @@ namespace DADTKV.transactionManager
 
                 if (_transactionManager.LeasesMissing.Count == 0)
                 {
-                    DebugClass.Log("---- We have all lets gooooo.");
+                    DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
                     _transactionManager.TransactionManagerSignal.Set();
                 }
             }
             else if (request.Id > _lastPropagateId)
             {
-                DebugClass.Log("---- The Lease is not for me :_.");
+                DebugClass.Log($"[Propagate Lease] The Lease is not for me :_.");
                 lock (this)
                 {
                     _lastPropagateId = request.Id;

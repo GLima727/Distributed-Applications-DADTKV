@@ -60,7 +60,7 @@ namespace DADTKV.leaseManager
                 var leaseList = new ReceiveLeaseListRequest();
                 leaseList.LeaseList = request.Val;
                 leaseList.RequestId = _lm.LmPaxos.PaxosRoundN;
-                DebugClass.Log($"Send leaseList to Learners. {leaseList.RequestId}");
+                DebugClass.Log($"Send leaseList to Learners from paxos round {leaseList.RequestId}.");
                 foreach (var tm in _lm.TmsClients)
                 {
                     tm.ReceiveLeaseListAsync(leaseList);

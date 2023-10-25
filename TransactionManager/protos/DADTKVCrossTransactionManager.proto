@@ -2,6 +2,8 @@ syntax = "proto3";
 
 // Service where Transaction Managers talk between themselves
 
+import "protos/DADINTstruct.proto";
+
 import "protos/lease_sheet_definitions.proto";
 
 message PropagateLeasesRequest {
@@ -11,23 +13,16 @@ message PropagateLeasesRequest {
 }
 
 message URBroadCastRequest {
-	string sender = 1;
-	repeated DADIntCopy message = 2;
-	int32 timeStamp = 3;
+  string sender = 1;
+  repeated DADInt message = 2;
+  int32 timeStamp = 3;
 }
 
-message URBroadCastReply {
-	int32 ack = 1;
-}
-
-message DADIntCopy {
-	string key = 1;
-	int32 value = 2;
-}
+message URBroadCastReply { int32 ack = 1; }
 
 message PropagateLeasesReply {}
 
 service CrossServerTransactionManagerService {
   rpc PropagateLeases(PropagateLeasesRequest) returns (PropagateLeasesReply);
-  rpc URBroadCast (URBroadCastRequest) returns (URBroadCastReply);
+  rpc URBroadCast(URBroadCastRequest) returns (URBroadCastReply);
 }

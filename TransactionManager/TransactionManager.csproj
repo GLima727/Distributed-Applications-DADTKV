@@ -26,6 +26,7 @@
 
   <ItemGroup>
 	  <Protobuf Include="protos\lease_sheet_definitions.proto" />
+	  <Protobuf Include="protos\DADINTstruct.proto" />
 	  <Protobuf Include="protos\DADTKVClient.proto" GrpcServices="Server" />
 	  <Protobuf Include="protos\DADTKVCrossTransactionManager.proto" GrpcServices="Both" />
 	  <Protobuf Include="protos\lease_m_transaction_m_communication.proto" GrpcServices="Both" />

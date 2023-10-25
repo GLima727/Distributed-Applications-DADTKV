@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "protos/DADINTstruct.proto";
+
 service ClientServerService {
 	rpc SubmitTransaction (ClientTransactionRequest) returns (ClientTransactionReply);
 	rpc Status (ClientStatusRequest) returns (ClientStatusReply);
@@ -20,7 +22,3 @@ message ClientStatusRequest {}
 
 message ClientStatusReply {}
 
-message DADInt {
-	string key = 1;
-	int32 value = 2;
-}

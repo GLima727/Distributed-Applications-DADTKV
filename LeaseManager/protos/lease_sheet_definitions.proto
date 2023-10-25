@@ -3,6 +3,7 @@ syntax = "proto3";
 message Lease {
   string tmId = 1;
   repeated string leasedResources = 2;
+  int32 transactionId = 3;
 }
 
 message LeaseList { repeated Lease leases = 1; }

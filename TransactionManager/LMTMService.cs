@@ -20,12 +20,12 @@ namespace DADTKV.transactionManager
 
         public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
-            DebugClass.Log("Received a lease sheet");
+            DebugClass.Log("[LM - TM] Received a lease sheet.");
             lock (this)
             {
                 if (_lastLeaseId >= request.RequestId)
                 {
-                    DebugClass.Log($"Ignore this lease sheet because {_lastLeaseId} >= {request.RequestId}.");
+                    DebugClass.Log($"[LM - TM] Ignore this lease sheet because last_lease_id={_lastLeaseId} >= lease_id_reveived={request.RequestId}.");
                     return new ReceiveLeaseListResponse();
                 }
 
@@ -33,11 +33,11 @@ namespace DADTKV.transactionManager
 
                 if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2)
                 {
-                    DebugClass.Log($"Still needs {_transactionManager.LmsClients.Count / 2 - _transactionManager.NumberLms}");
+                    DebugClass.Log($"[LM - TM] Still needs {_transactionManager.LmsClients.Count / 2 - _transactionManager.NumberLms}");
                     return new ReceiveLeaseListResponse();
                 }
 
-                DebugClass.Log1("Learnet.");
+                DebugClass.Log($"[LM - TM] Learnt");
                 _lastLeaseId = request.RequestId;
             }
 
@@ -45,14 +45,14 @@ namespace DADTKV.transactionManager
 
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
 
-            DebugClass.Log("Check if it does to send resources from the last round.");
+            DebugClass.Log("[LM - TM] [Send resources]");
             foreach (var resource in _transactionManager.LeasesAvailable)
             {
                 foreach (var lease in request.LeaseList.Leases.ToList())
                 {
                     if (lease.LeasedResources.Contains((resource)))
                     {
-                        DebugClass.Log($"Needs to send {resource} to {lease.TmId}.");
+                        DebugClass.Log($"[LM - TM] [Send resources] Needs to send {resource} to {lease.TmId}.");
                         // Theorodical this if is useless
                         if (lease.TmId != _transactionManager.Id)
                         {
@@ -64,7 +64,7 @@ namespace DADTKV.transactionManager
                 }
             }
 
-            DebugClass.Log("Send resources.");
+            DebugClass.Log("[LM - TM] [Send resources] propagate resources.");
             foreach (var val in leasesToSend)
             {
                 _transactionManager.PropagateLeaseResource(val.Key, val.Value);
@@ -72,7 +72,7 @@ namespace DADTKV.transactionManager
 
             _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
 
-            DebugClass.Log("Sent signal to thread.");
+            DebugClass.Log("[LM - TM] Sent signal to thread.");
             _transactionManager.TransactionQueue.Dequeue().Set();
             return new ReceiveLeaseListResponse();
         }

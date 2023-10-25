@@ -92,7 +92,7 @@ namespace DADTKV.leaseManager
 
         public async void PaxosRound(Object source, ElapsedEventArgs e)
         {
-            _paxosRoundN++;
+            PaxosRoundN++;
 
             if (IsLeader() && _lm.Buffer.Leases.Count() != 0 && !IsDown())
             {

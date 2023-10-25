@@ -297,7 +297,7 @@ namespace DADTKV.transactionManager
 
         public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
         {
-            DebugClass.Log("Super flag");
+            DebugClass.Log("[Propagate Lease tm function]");
             PropagateLeasesRequest request = new PropagateLeasesRequest();
             request.Lease = new Lease();
             request.Lease.LeasedResources.AddRange(leaseResource);
@@ -305,22 +305,40 @@ namespace DADTKV.transactionManager
             request.Id = ++PropagateId;
             request.SenderId = Id;
 
-            DebugClass.Log("Super flag");
             // checks if any transaction manager can respond to it in this timeslot
             lock (this)
             {
                 foreach (var tm in TmsClients)
                 {
-                    DebugClass.Log("-------------------------------------------------------");
-
-                    if (!tm.Value.Item2.Contains(TimeSlot) || tm.Key != Id)
+                    if (!tm.Value.Item2.Contains(TimeSlot) && tm.Key != Id)
                     {
-                        DebugClass.Log($"-----Send leases to {tm.Key}");
-                        DebugClass.Log($"-----Send leases to {tm.Value.Item2}");
+                        DebugClass.Log($"[Propagate Lease tm function] send lease {tm.Key} {tm.Value.Item2}");
                         //if you dont suspect the tm at this timeslot you can ask for the leases
                         tm.Value.Item1.PropagateLeasesAsync(request);
                     }
                 }
+            }
+        }
+
+        public void URBroadCastMemory(List<DADInt> message)
+        {
+            DebugClass.Log("[URBroadCast]");
+
+            foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
+                in TmsClients)
+            {
+                //if tmClient == alive?
+                URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
+
+                foreach (DADInt m in message)
+                {
+                    DebugClass.Log($"[URBroadCast] DAdiNT {m}");
+                }
+
+                urbroadcastRequest.Sender = Id;
+                urbroadcastRequest.Message.AddRange(message);
+                urbroadcastRequest.TimeStamp = TimeSlot;
+                tm.Value.Item1.URBroadCast(urbroadcastRequest);
             }
         }
 

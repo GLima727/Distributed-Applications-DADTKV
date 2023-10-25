@@ -58,6 +58,7 @@ namespace DADTKV.client
                     case WCommand:
                         WCommand wCommand = (WCommand)command;
                         DebugClass.Log(wCommand.ToString());
+                        DebugClass.Log(wCommand.GetWaitTime().ToString());
                         Thread.Sleep(wCommand.GetWaitTime());
                         break;
                 }
