@@ -23,6 +23,12 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
+
+            foreach (KeyValuePair<string, int> dad in _transactionManager.DadInts)
+            {
+                DebugClass.Log2($"-------memory:{dad.Key},{dad.Value}");
+            }
+
             ManualResetEventSlim processSignal = new ManualResetEventSlim(false);
             _transactionManager.TransactionQueue.Enqueue(processSignal);
 
@@ -55,6 +61,20 @@ namespace DADTKV.transactionManager
                     DebugClass.Log($"----Doesn't have lease {dadInt.Key}.");
                 }
             }
+
+            List<DADIntCopy> updatedDadIntList = new List<DADIntCopy>();
+
+            foreach (DADInt dadInt in request.WriteOperations)
+            {
+                DebugClass.Log("adding to memory to send.");
+
+                DADIntCopy copy = new DADIntCopy();
+                copy.Key = dadInt.Key;
+                copy.Value = dadInt.Value;
+                updatedDadIntList.Add(copy);
+            }
+
+            URBroadCastMemory(updatedDadIntList);
 
             if (_transactionManager.LeasesMissing.Count != 0)
             {
@@ -227,6 +247,26 @@ namespace DADTKV.transactionManager
             }
 
             Task.WhenAll(tasks);
+        }
+        public void URBroadCastMemory(List<DADIntCopy> message)
+        {
+            foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
+                in _transactionManager.TmsClients)
+            {
+                //if tmClient == alive?
+                URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
+
+                foreach (DADIntCopy m in message)
+                {
+                    DebugClass.Log($"DAdiNT {m}");
+
+                }
+
+                urbroadcastRequest.Sender = _transactionManager.Id;
+                urbroadcastRequest.Message.AddRange(message);
+                urbroadcastRequest.TimeStamp = _transactionManager.TimeSlot;
+                tm.Value.Item1.URBroadCast(urbroadcastRequest);
+            }
         }
     }
 }

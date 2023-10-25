@@ -150,6 +150,21 @@ namespace DADTKV.transactionManager
             set { _tmsClients = value; }
         }
 
+        private List<int> _numAliveProcesses;
+        public List<int> NumAliveProcesses
+        {
+            get { return _numAliveProcesses; }
+            set { _numAliveProcesses = value; }
+        }
+
+        private List<string> _acksReceived = new List<string>();
+        private object _acksReceivedLock = new object();
+        public List<string> AcksReceived
+        {
+            get { lock (_acksReceivedLock) { return _acksReceived; } }
+            set { lock (_acksReceivedLock) { _acksReceived = value; } }
+        }
+
         public TransactionManager()
         {
         }
