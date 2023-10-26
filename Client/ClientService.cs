@@ -59,9 +59,9 @@
             }
             else
             {
-                foreach (DADInt value in reply.ObjValues)
+                foreach (DADInt v in reply.ObjValues)
                 {
-                    Console.WriteLine($"<{DADInt.ValueFieldNumber}, {DADInt.KeyFieldNumber}>");
+                    Console.WriteLine($"<{v.Key}, {v.Value}>");
                 }
             }
         }

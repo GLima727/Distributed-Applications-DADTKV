@@ -60,7 +60,7 @@
                         if (lease_index == 0 && _transactionManager.NRound == 1)
                         {
                             _transactionManager.LeasesAvailable = transaction.MissingLeases;
-                            DebugClass.Log("[SubmitTransactionImpl] [Make transaction] [Solve missing leases] I was the first to receive this lease.");
+                            DebugClass.Log("[Epoch] [Make transaction] [Solve missing leases] I was the first to receive this lease.");
                         }
                         else
                         {
@@ -78,7 +78,7 @@
 
                             foreach (var l in transaction.MissingLeases)
                             {
-                                DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] [Solve missing leases] missing {l}");
+                                DebugClass.Log($"[Epoch] [Make transaction] [Solve missing leases] missing {l}");
                             }
 
                             if (transaction.MissingLeases.Count != 0)

@@ -263,6 +263,26 @@ namespace DADTKV.transactionManager
         {
             ClientTransactionReply reply = new ClientTransactionReply();
 
+            DebugClass.Log("Execute reading operations");
+            // Execute reading operations.
+            foreach (string readOp in request.ReadOperations)
+            {
+                if (!DadInts.ContainsKey(readOp))
+                {
+                    DebugClass.Log($"Reading {readOp} - NULL");
+                    var resp = new DADInt();
+                    reply.ObjValues.Add(resp);
+                }
+                else
+                {
+                    DebugClass.Log($"Reading {readOp} - {DadInts[readOp]}");
+                    var resp = new DADInt();
+                    resp.Key = readOp;
+                    resp.Value = DadInts[readOp];
+                    reply.ObjValues.Add(resp);
+                }
+            }
+
             // Execute writting operations.
             foreach (DADInt dadInt in request.WriteOperations)
             {

@@ -72,12 +72,15 @@ namespace DADTKV.transactionManager
                 }
             }
 
+            DebugClass.Log($"[SubmitTransactionImpl] missing {transaction.MissingLeases.Count}.");
             if (transaction.MissingLeases.Count == 0)
             {
+                DebugClass.Log($"[SubmitTransactionImpl] have lease.");
                 reply = _transactionManager.executeOperations(request);
             }
             else
             {
+                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease.");
                 _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueue.Enqueue(transaction);
                 if (_transactionManager.CurrentRound != 0)
                 {
