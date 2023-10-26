@@ -1,6 +1,8 @@
-﻿namespace DADTKV.client
+﻿using Grpc.Core;
+
+namespace DADTKV.client
 {
-    class ClientService
+    class ClientService : ClientServerService.ClientServerServiceBase
     {
         private Client _client;
 
@@ -11,6 +13,31 @@
         {
             _client = client;
         }
+
+        public override Task<ReceiveTransactionReply> ReceiveTransaction(ClientTransactionReply request,
+                ServerCallContext context)
+        {
+
+            return Task.FromResult(ReceiveTransactionImpl(request));
+        }
+
+        ReceiveTransactionReply ReceiveTransactionImpl(ClientTransactionReply request)
+        {
+            if (request.ObjValues.Count == 1 && request.ObjValues[0].Key == "ABORT" && request.ObjValues[0].Value == -1)
+            {
+                DebugClass.Log("Transaction aborted.");
+            }
+            else
+            {
+                foreach (DADInt value in request.ObjValues)
+                {
+                    Console.WriteLine($"<{DADInt.ValueFieldNumber}, {DADInt.KeyFieldNumber}>");
+                }
+            }
+
+            return new ReceiveTransactionReply();
+        }
+
 
         /// <summary>
         /// Method to create a sort of LoadBalancer for the TMs.
@@ -49,11 +76,21 @@
             var tm = GetTransactionManager();
             var reply = tm.SubmitTransaction(request);
 
-            foreach (int value in reply.ObjValues)
+            if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "OK" && reply.ObjValues[0].Value == -1)
             {
-                Console.WriteLine(value);
+                DebugClass.Log("Transaction received.");
             }
-
+            else if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "ABORT" && reply.ObjValues[0].Value == -1)
+            {
+                DebugClass.Log("Transaction aborted.");
+            }
+            else
+            {
+                foreach (DADInt value in reply.ObjValues)
+                {
+                    Console.WriteLine($"<{DADInt.ValueFieldNumber}, {DADInt.KeyFieldNumber}>");
+                }
+            }
         }
 
         /// <summary>
