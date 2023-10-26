@@ -104,6 +104,9 @@ namespace DADTKV.transactionManager
 
             var info = new TransactionInfo();
             _transactionManager.TransactionQueueInfo.Enqueue(info);
+
+
+
             DebugClass.Log($"[SubmitTransactionImpl] {_transactionManager.TransactionQueueInfo.Count}.");
 
             ClientTransactionReply reply = new ClientTransactionReply();
@@ -169,6 +172,7 @@ namespace DADTKV.transactionManager
                         {
                             // check if someone have the leases we need
                             var missingLeases = lookBackLeases(lease, lease_index, leaseSheet);
+
                             var leases_to_add = info.MissingLeases.Except(missingLeases).ToList();
                             info.MissingLeases = missingLeases;
 
@@ -201,8 +205,14 @@ namespace DADTKV.transactionManager
                         {
                             DebugClass.Log($"[SubmitTransactionImpl] [Make transaction] [Solve missing leases] [Send leases] sending {leases.Key}");
 
-                            //im checking the suspicion list inside this
-                            //here you ask for leases but dont send the request if you suspect the one you are asking
+                            // If we need to send leases to our selfs skip
+                            if (leases.Key == _transactionManager.Id)
+                            {
+                                continue;
+                            }
+
+                            // im checking the suspicion list inside this
+                            // here you ask for leases but dont send the request if you suspect the one you are asking
                             _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
 
                             // remove A from ("A","B") and so on
@@ -242,15 +252,13 @@ namespace DADTKV.transactionManager
                 {
                     if (leaseSheet[i].LeasedResources.Contains(resource))
                     {
-                        if (leaseSheet[i].TmId != _transactionManager.Id)
+                        // atencao verificar se ele nao esta a criar ids repetidos no dicionario
+                        if (!leasesToSend.ContainsKey(leaseSheet[i].TmId))
                         {
-                            // atencao verificar se ele nao esta a criar ids repetidos no dicionario
-                            if (!leasesToSend.ContainsKey(leaseSheet[i].TmId))
-                            {
-                                leasesToSend[leaseSheet[i].TmId] = new List<string>();
-                            }
-                            leasesToSend[leaseSheet[i].TmId].Add(resource);
+                            leasesToSend[leaseSheet[i].TmId] = new List<string>();
                         }
+                        leasesToSend[leaseSheet[i].TmId].Add(resource);
+
                         break;
                     }
                 }
@@ -274,11 +282,17 @@ namespace DADTKV.transactionManager
                 for (int i = lease_index - 1; i >= 0; i--)
                 {
                     DebugClass.Log($"[LookBack] {lease_index}");
-                    if (leaseSheet[i].TmId != _transactionManager.Id
-                            && leaseSheet[i].LeasedResources.Contains(resource))
+                    if (leaseSheet[i].LeasedResources.Contains(resource))
                     {
-                        DebugClass.Log($"[LookBack] added {resource}");
-                        missingLeases.Add(resource);
+                        if (leaseSheet[i].TmId != _transactionManager.Id)
+                        {
+                            DebugClass.Log($"[LookBack] added {resource}");
+                            missingLeases.Add(resource);
+                        }
+                        else
+                        {
+                            DebugClass.Log($"[LookBack] we have the lease {resource}");
+                        }
                         break;
                     }
                 }

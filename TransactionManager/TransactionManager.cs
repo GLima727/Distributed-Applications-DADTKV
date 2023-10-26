@@ -306,6 +306,7 @@ namespace DADTKV.transactionManager
         public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
         {
             DebugClass.Log("[Propagate Lease tm function]");
+
             PropagateLeasesRequest request = new PropagateLeasesRequest();
             request.Lease = new Lease();
             request.Lease.LeasedResources.AddRange(leaseResource);
@@ -318,7 +319,7 @@ namespace DADTKV.transactionManager
             {
                 foreach (var tm in TmsClients)
                 {
-                    if (!tm.Value.Item2.Contains(TimeSlot) && (tm.Key != Id || tmIDtarget == Id))
+                    if (!tm.Value.Item2.Contains(TimeSlot) && tm.Key != Id)
                     {
                         DebugClass.Log($"[Propagate Lease tm function] send lease {tm.Key} {tm.Value.Item2}");
                         //if you dont suspect the tm at this timeslot you can ask for the leases
