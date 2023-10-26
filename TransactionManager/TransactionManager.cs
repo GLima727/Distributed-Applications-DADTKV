@@ -1,10 +1,14 @@
-﻿using Grpc.Core;
+﻿using System.Timers;
+
+using Grpc.Core;
 using Grpc.Net.Client;
 
 namespace DADTKV.transactionManager
 {
     class TransactionManager
     {
+        private System.Timers.Timer _clock = new System.Timers.Timer();
+
         private string _id = "";
         public string Id { get { return _id; } set { _id = value; } }
 
@@ -23,11 +27,16 @@ namespace DADTKV.transactionManager
         private object _nRoundlock = new object();
         public int NRound { get { lock (_nRoundlock) { return _nRound; } } set { lock (_nRoundlock) { _nRound = value; } } }
 
+
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
 
         private int _numSlot = 0;
         public int NumSlot { get { return _numSlot; } set { _numSlot = value; } }
+
+        private int _currentRound = 0;
+        private object _currentRoundLock = new object();
+        public int CurrentRound { get { lock (_currentRoundLock) { return _currentRound; } } set { lock (_currentRoundLock) { _currentRound = value; } } }
 
         private List<int> _roundsDowns = new List<int>();
         public List<int> RoundsDowns { get { return _roundsDowns; } set { _roundsDowns = value; } }
@@ -44,56 +53,16 @@ namespace DADTKV.transactionManager
         private List<Tuple<int, string>> _susList = new List<Tuple<int, string>>();
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
-        private List<string> _leasesMissing = new List<string>();
-        private object _leasesMissingLock = new object();
-        public List<string> LeasesMissing
-        {
-            get { lock (_leasesMissingLock) { return _leasesMissing; } }
-            set { lock (_leasesMissingLock) { _leasesMissing = value; } }
-        }
-
         private List<string> _leasesAvailable = new List<string>();
         private object _leaseListLock = new object();
-
         public List<string> LeasesAvailable
         {
             get { lock (_leaseListLock) { return _leasesAvailable; } }
             set { lock (_leaseListLock) { _leasesAvailable = value; } }
         }
 
-        private List<(string, string)> _sendTaks = new List<(string, string)>();
-        private object _sendTaksLock = new object();
-
-        public List<(string, string)> SendTaks
-        {
-            get { lock (_sendTaksLock) { return _sendTaks; } }
-            set { lock (_leaseListLock) { _sendTaks = value; } }
-        }
-
-        private List<Lease> _leaseSheet = new List<Lease>();
-        private object _leaseSheetsLock = new object();
-        public List<Lease> LeaseSheet
-        {
-            get { lock (_leaseSheetsLock) { return _leaseSheet; } }
-            set { lock (_leaseSheetsLock) { _leaseSheet = value; } }
-        }
-
-        private List<Lease> _propagateLeasesNeed = new List<Lease>();
-        public List<Lease> PropagateLeasesNeed { get { return _propagateLeasesNeed; } set { _propagateLeasesNeed = value; } }
-
         private int _numberLms;
-
         public int NumberLms { get { return _numberLms; } set { _numberLms = value; } }
-
-        private ManualResetEventSlim _signal = new ManualResetEventSlim(false);
-        public ManualResetEventSlim Signal { get { return _signal; } }
-
-        private ManualResetEventSlim _transactionManagerSignal = new ManualResetEventSlim();
-        private object _transactionManagerSignalsLock = new object();
-        public ManualResetEventSlim TransactionManagerSignal
-        {
-            get { lock (_transactionManagerSignalsLock) { return _transactionManagerSignal; } }
-        }
 
         private TransactionInfo _currentTrans = new TransactionInfo();
         private object _currentTransLock = new object();
@@ -103,26 +72,8 @@ namespace DADTKV.transactionManager
             set { lock (_currentTransLock) { _currentTrans = value; } }
         }
 
-        private Queue<TransactionInfo> _transactionInfoQueue = new Queue<TransactionInfo>();
-        private object _transactionQueueInfoLock = new object();
-        public Queue<TransactionInfo> TransactionQueueInfo
-        {
-            get { lock (_transactionQueueInfoLock) { return _transactionInfoQueue; } }
-            set { lock (_transactionQueueInfoLock) { _transactionInfoQueue = value; } }
-        }
-
-        private int _transactionID = 0;
-        private object _transactionIDLock = new object();
-
-        public int TransactionID
-        {
-            get { lock (_transactionIDLock) { return _transactionID; } }
-            set { lock (_transactionIDLock) { _transactionID = value; } }
-        }
-
         private List<TransactionEpoch> _transactionEpochList = new List<TransactionEpoch>();
         private object _transactionEpochLock = new object();
-
         public List<TransactionEpoch> TransactionEpochList
         {
             get { lock (_transactionEpochLock) { return _transactionEpochList; } }
@@ -137,19 +88,9 @@ namespace DADTKV.transactionManager
             set { lock (_dadIntsLock) { _dadInts = value; } }
         }
 
-        private Dictionary<string, List<string>> _transactionsManagersLeases = new Dictionary<string, List<string>>();
-        private object _transactionsManagersLeasesLock = new object();
-
-        public Dictionary<string, List<string>> TransactionsManagersLeases
-        {
-            get { lock (_transactionsManagersLeasesLock) { return _transactionsManagersLeases; } }
-            set { lock (_transactionsManagersLeasesLock) { _transactionsManagersLeases = value; } }
-        }
-
         //LM ID, Client
         private Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> _lmsClients
             = new Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient>();
-
         public Dictionary<string, LMTMCommunicationService.LMTMCommunicationServiceClient> LmsClients
         {
             get { return _lmsClients; }
@@ -159,18 +100,10 @@ namespace DADTKV.transactionManager
         // TM ID, Client
         private Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> _tmsClients
             = new Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>>();
-
         public Dictionary<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> TmsClients
         {
             get { return _tmsClients; }
             set { _tmsClients = value; }
-        }
-
-        private List<int> _numAliveProcesses;
-        public List<int> NumAliveProcesses
-        {
-            get { return _numAliveProcesses; }
-            set { _numAliveProcesses = value; }
         }
 
         private List<string> _acksReceived = new List<string>();
@@ -249,6 +182,9 @@ namespace DADTKV.transactionManager
                 Ports = { serverPort }
             };
 
+            // Create first epoch
+            _transactionEpochList.Add(new TransactionEpoch(this));
+
             server.Start();
             DebugClass.Log("Set connections to another LMs.");
             createConnectionsToLms();
@@ -259,56 +195,20 @@ namespace DADTKV.transactionManager
             WaitForStartTime();
             DebugClass.Log("Wall time completed.");
 
+            // Start the clock
+            _clock.Interval = _timeSlot;
+            _clock.AutoReset = true;
+            _clock.Elapsed += TimeSlotRound;
+            _clock.Start();
+
 
             while (true) ;
         }
 
-        public bool ContainsLease(string lease)
+        public void TimeSlotRound(Object source, ElapsedEventArgs e)
         {
-            lock (_leaseListLock)
-            {
-                return _leasesAvailable.Contains(lease);
-            }
-        }
-
-        public void AddLeaseToAvailableList(string lease)
-        {
-            lock (_leaseListLock)
-            {
-                _leasesAvailable.Add(lease);
-            }
-        }
-
-        public void RemoveLeaseFromAvailableList(string lease)
-        {
-            lock (_leaseListLock)
-            {
-                _leasesAvailable.Remove(lease);
-            }
-        }
-
-        public void AddMissingLease(string lease)
-        {
-            lock (_leasesMissingLock)
-            {
-                _leasesMissing.Add(lease);
-            }
-        }
-
-        public void RemoveMissingLease(string lease)
-        {
-            lock (_leasesMissingLock)
-            {
-                _leasesMissing.Remove(lease);
-            }
-        }
-
-        public void AddLeaseSheet(Lease lease)
-        {
-            lock (_leaseSheetsLock)
-            {
-                _leaseSheet.Add(lease);
-            }
+            CurrentRound++;
+            _transactionEpochList.Add(new TransactionEpoch(this));
         }
 
         public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
@@ -359,5 +259,22 @@ namespace DADTKV.transactionManager
             }
         }
 
+        public ClientTransactionReply executeOperations(ClientTransactionRequest request)
+        {
+            ClientTransactionReply reply = new ClientTransactionReply();
+
+            // Execute writting operations.
+            foreach (DADInt dadInt in request.WriteOperations)
+            {
+                DadInts[dadInt.Key] = dadInt.Value;
+            }
+
+            if (request.WriteOperations.ToList().Count() != 0)
+            {
+                // Propagate WriteOperations
+                URBroadCastMemory(request.WriteOperations.ToList());
+            }
+            return reply;
+        }
     }
 }

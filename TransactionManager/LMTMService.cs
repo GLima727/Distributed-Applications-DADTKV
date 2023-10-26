@@ -84,11 +84,8 @@ namespace DADTKV.transactionManager
                 _transactionManager.PropagateLeaseResource(val.Key, val.Value);
             }
 
-            _transactionManager.LeaseSheet = request.LeaseList.Leases.ToList();
-
             DebugClass.Log("[LM - TM] Sent signal to thread.");
-            _transactionManager.CurrentTrans = _transactionManager.TransactionQueueInfo.Dequeue();
-            _transactionManager.CurrentTrans.SignalLSheet.Set();
+            // Run epoch run
             return new ReceiveLeaseListResponse();
         }
     }

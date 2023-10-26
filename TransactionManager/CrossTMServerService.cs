@@ -99,7 +99,7 @@ namespace DADTKV.transactionManager
                     foreach (string resourceLease in request.Lease.LeasedResources)
                     {
                         _transactionManager.CurrentTrans.MissingLeases.Remove(resourceLease);
-                        _transactionManager.AddLeaseToAvailableList(resourceLease);
+                        _transactionManager.LeasesAvailable.Add(resourceLease);
                     }
 
                     if (_transactionManager.CurrentTrans.MissingLeases.Count == 0)
