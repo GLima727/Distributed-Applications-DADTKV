@@ -27,7 +27,6 @@ namespace DADTKV.transactionManager
         private object _nRoundlock = new object();
         public int NRound { get { lock (_nRoundlock) { return _nRound; } } set { lock (_nRoundlock) { _nRound = value; } } }
 
-
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
 
@@ -37,6 +36,10 @@ namespace DADTKV.transactionManager
         private int _currentRound = 0;
         private object _currentRoundLock = new object();
         public int CurrentRound { get { lock (_currentRoundLock) { return _currentRound; } } set { lock (_currentRoundLock) { _currentRound = value; } } }
+
+        private int _currentRoundPaxos = 0;
+        private object _currentRoundPaxosLock = new object();
+        public int CurrentRoundPaxos { get { lock (_currentRoundPaxosLock) { return _currentRoundPaxos; } } set { lock (_currentRoundPaxosLock) { _currentRoundPaxos = value; } } }
 
         private List<int> _roundsDowns = new List<int>();
         public List<int> RoundsDowns { get { return _roundsDowns; } set { _roundsDowns = value; } }
@@ -113,6 +116,8 @@ namespace DADTKV.transactionManager
             get { lock (_acksReceivedLock) { return _acksReceived; } }
             set { lock (_acksReceivedLock) { _acksReceived = value; } }
         }
+
+        public object LMTMLock = new object();
 
         public TransactionManager()
         {

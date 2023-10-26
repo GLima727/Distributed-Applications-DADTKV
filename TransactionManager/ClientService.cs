@@ -78,15 +78,17 @@ namespace DADTKV.transactionManager
             }
             else
             {
-                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease in round {_transactionManager.CurrentRound}.");
 
-                if (_transactionManager.CurrentRound != 0)
+                Monitor.Enter(_transactionManager.LMTMLock);
+                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease in round {_transactionManager.CurrentRoundPaxos}.");
+                if (_transactionManager.CurrentRoundPaxos != 0)
                 {
-                    _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].EpochSignal.Wait();
+                    _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos - 1].EpochSignal.Wait();
                 }
 
-                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueue.Add(transaction);
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos].TransactionQueue.Add(transaction);
                 RequestLeases(transaction.MissingLeases, transaction.TransactionID);
+                Monitor.Exit(_transactionManager.LMTMLock);
                 transaction.SignalClient.Wait();
                 reply = transaction.TransactionReply;
 

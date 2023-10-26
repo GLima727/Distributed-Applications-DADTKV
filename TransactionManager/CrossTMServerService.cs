@@ -106,8 +106,9 @@ namespace DADTKV.transactionManager
                     {
                         DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
                         _transactionManager.CurrentTrans.SignalLTM.Set();
+                    } else {
+                        DebugClass.Log($"[Propagate Lease] We don't have all.");
                     }
-                    DebugClass.Log($"[Propagate Lease] We don't have all.");
                     foreach (var a in _transactionManager.CurrentTrans.MissingLeases)
                     {
                         DebugClass.Log($"[Propagate Lease] Missing {a}.");

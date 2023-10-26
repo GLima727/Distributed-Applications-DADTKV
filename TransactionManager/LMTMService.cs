@@ -20,8 +20,10 @@ namespace DADTKV.transactionManager
 
         public ReceiveLeaseListResponse ReceiveLeaseListImpl(ReceiveLeaseListRequest request)
         {
-            bool flag = false;
             DebugClass.Log("[LM - TM] Received a lease sheet.");
+            Monitor.Enter(_transactionManager.LMTMLock);
+
+            bool flag = false;
             foreach (var l in request.LeaseList.Leases.ToList())
             {
                 if (l.TmId == _transactionManager.Id)
@@ -40,6 +42,7 @@ namespace DADTKV.transactionManager
                 if (_lastLeaseId >= request.RequestId)
                 {
                     DebugClass.Log($"[LM - TM] Ignore this lease sheet because last_lease_id={_lastLeaseId} >= lease_id_reveived={request.RequestId}.");
+                    Monitor.Exit(_transactionManager.LMTMLock);
                     return new ReceiveLeaseListResponse();
                 }
 
@@ -48,6 +51,7 @@ namespace DADTKV.transactionManager
                 if (_transactionManager.NumberLms < _transactionManager.LmsClients.Count / 2)
                 {
                     DebugClass.Log($"[LM - TM] Still needs {_transactionManager.LmsClients.Count / 2 - _transactionManager.NumberLms}");
+                    Monitor.Exit(_transactionManager.LMTMLock);
                     return new ReceiveLeaseListResponse();
                 }
 
@@ -88,15 +92,16 @@ namespace DADTKV.transactionManager
             try
             {
                 DebugClass.Log("[LM - TM] Set signal.");
-                _transactionManager.TransactionEpochList[_lastLeaseId].EpochSignal.Set();
-                _transactionManager.TransactionEpochList[_lastLeaseId].Run(request.LeaseList.Leases.ToList());
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos].EpochSignal.Set();
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos].Run(request.LeaseList.Leases.ToList());
             }
             catch (Exception e)
             {
                 DebugClass.Log(e.Message);
             }
+            Monitor.Exit(_transactionManager.LMTMLock);
+            DebugClass.Log("[LM - TM] Exit.");
             return new ReceiveLeaseListResponse();
-
         }
     }
 }

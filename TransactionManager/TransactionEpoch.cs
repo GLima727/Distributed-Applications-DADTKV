@@ -55,11 +55,15 @@
                     TransactionInfo transaction = new TransactionInfo();
                     foreach (var t in TransactionQueue)
                     {
-                        if (t.TransactionID == lease.TransactionId) {
+                        if (t.TransactionID == lease.TransactionId)
+                        {
                             transaction = t;
                             break;
                         }
                     }
+
+                    _transactionManager.CurrentTrans = transaction;
+
                     // if is the first dont look back
                     if (lease_index == 0 && _transactionManager.NRound == 1)
                     {
@@ -126,6 +130,7 @@
                 lease_index++;
             }
             // _transactionManager.TransactionEpochList[EpochIndex - 1].EpochSignal.Set();
+            DebugClass.Log($"[Run] Exit.");
         }
 
         public Dictionary<string, List<string>> lookAheadLeases(Lease lease, int lease_index, List<Lease> leaseSheet)
@@ -184,6 +189,5 @@
             }
             return missingLeases;
         }
-
     }
 }
