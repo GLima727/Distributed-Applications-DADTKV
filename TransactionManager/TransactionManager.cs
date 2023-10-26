@@ -183,7 +183,8 @@ namespace DADTKV.transactionManager
             };
 
             // Create first epoch
-            _transactionEpochList.Add(new TransactionEpoch(this));
+            for (int i = 0; i < _numSlot; i++)
+                _transactionEpochList.Add(new TransactionEpoch(this));
 
             server.Start();
             DebugClass.Log("Set connections to another LMs.");
@@ -208,7 +209,7 @@ namespace DADTKV.transactionManager
         public void TimeSlotRound(Object source, ElapsedEventArgs e)
         {
             CurrentRound++;
-            _transactionEpochList.Add(new TransactionEpoch(this));
+            DebugClass.Log("New timeslot");
         }
 
         public void PropagateLeaseResource(string tmIDtarget, List<string> leaseResource)
@@ -263,19 +264,17 @@ namespace DADTKV.transactionManager
         {
             ClientTransactionReply reply = new ClientTransactionReply();
 
-            DebugClass.Log("Execute reading operations");
+            DebugClass.Log("[ExecuteOP] Execute operations");
             // Execute reading operations.
             foreach (string readOp in request.ReadOperations)
             {
                 if (!DadInts.ContainsKey(readOp))
                 {
-                    DebugClass.Log($"Reading {readOp} - NULL");
                     var resp = new DADInt();
                     reply.ObjValues.Add(resp);
                 }
                 else
                 {
-                    DebugClass.Log($"Reading {readOp} - {DadInts[readOp]}");
                     var resp = new DADInt();
                     resp.Key = readOp;
                     resp.Value = DadInts[readOp];

@@ -50,7 +50,6 @@ namespace DADTKV.transactionManager
                 return reply;
             }
 
-            DebugClass.Log("[SubmitTransactionImpl] [Read transactions]");
             foreach (string readOp in request.ReadOperations)
             {
                 DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] Needs to access {readOp}.");
@@ -61,7 +60,6 @@ namespace DADTKV.transactionManager
                 }
             }
 
-            DebugClass.Log("[SubmitTransactionImpl] [Write transactions]");
             foreach (DADInt dadInt in request.WriteOperations)
             {
                 DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] Needs to access {dadInt.Key}.");
@@ -80,12 +78,14 @@ namespace DADTKV.transactionManager
             }
             else
             {
-                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease.");
-                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueue.Enqueue(transaction);
+                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease in round {_transactionManager.CurrentRound}.");
+
                 if (_transactionManager.CurrentRound != 0)
                 {
                     _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].EpochSignal.Wait();
                 }
+
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueue.Add(transaction);
                 RequestLeases(transaction.MissingLeases, transaction.TransactionID);
                 transaction.SignalClient.Wait();
                 reply = transaction.TransactionReply;

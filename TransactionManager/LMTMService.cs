@@ -87,6 +87,7 @@ namespace DADTKV.transactionManager
             // Run epoch run
             try
             {
+                DebugClass.Log("[LM - TM] Set signal.");
                 _transactionManager.TransactionEpochList[_lastLeaseId].EpochSignal.Set();
                 _transactionManager.TransactionEpochList[_lastLeaseId].Run(request.LeaseList.Leases.ToList());
             }
