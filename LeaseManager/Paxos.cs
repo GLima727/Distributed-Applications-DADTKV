@@ -13,7 +13,7 @@ namespace DADTKV.leaseManager
 
         private LeaseManager _lm;
 
-        private int _paxosRoundN = 0;
+        private int _paxosRoundN = -1;
         private object _paxosRoundNLock = new object();
         public int PaxosRoundN
         {
@@ -93,7 +93,6 @@ namespace DADTKV.leaseManager
         public async void PaxosRound(Object source, ElapsedEventArgs e)
         {
             PaxosRoundN++;
-
             if (IsLeader() && _lm.Buffer.Leases.Count() != 0 && !IsDown())
             {
                 List<string> susList = getSusList(_paxosRoundN);
@@ -177,7 +176,6 @@ namespace DADTKV.leaseManager
             {
                 _lmPaxosTuple = new PaxosTuple(null, 0, 0);
             }
-
         }
     }
 }

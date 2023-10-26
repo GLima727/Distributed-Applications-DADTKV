@@ -42,6 +42,7 @@
         {
             DebugClass.Log("[Run] start.");
 
+            DebugClass.Log($"[Run] have {TransactionQueue.Count}.");
             while (TransactionQueue.Count > 0)
             {
                 var transaction = TransactionQueue.Dequeue();
