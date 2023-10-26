@@ -36,7 +36,7 @@ namespace DADTKV.transactionManager
             DebugClass.Log("[SubmitTransactionImpl] Received transaction.");
             TransactionInfo transaction = new TransactionInfo();
             transaction.TransactionID = _transId++;
-            transaction.ClientTransactionRequest = request;
+            transaction.TransactionRequest = request;
 
 
             ClientTransactionReply reply = new ClientTransactionReply();
@@ -78,16 +78,14 @@ namespace DADTKV.transactionManager
             }
             else
             {
-                //_transactionManager.TransactionEpochList[_transactionManager.TimeSlot - 1].Add(transaction);
-                if (_transactionManager.TimeSlot != 0)
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueueInfo.Enqueue(transaction);
+                if (_transactionManager.CurrentRound != 0)
                 {
-                    //_transactionManager.TransactionEpochList[_transactionManager.TimeSlot - 1].
+                    _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].EpochSignal.Wait();
                 }
                 RequestLeases(transaction.MissingLeases, transaction.TransactionID);
-                DADInt dADInt = new DADInt();
-                dADInt.Key = "OK";
-                dADInt.Value = -1;
-                reply.ObjValues.Add(dADInt);
+                transaction.SignalClient.Wait();
+                reply = transaction.TransactionReply;
 
             }
             return reply;

@@ -86,6 +86,8 @@ namespace DADTKV.transactionManager
 
             DebugClass.Log("[LM - TM] Sent signal to thread.");
             // Run epoch run
+            _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].EpochSignal.Set();
+            _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].Run(request.LeaseList.Leases.ToList());
             return new ReceiveLeaseListResponse();
         }
     }

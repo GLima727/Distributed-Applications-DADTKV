@@ -1,8 +1,6 @@
-﻿using Grpc.Core;
-
-namespace DADTKV.client
+﻿namespace DADTKV.client
 {
-    class ClientService : ClientServerService.ClientServerServiceBase
+    class ClientService
     {
         private Client _client;
 
@@ -13,31 +11,6 @@ namespace DADTKV.client
         {
             _client = client;
         }
-
-        public override Task<ReceiveTransactionReply> ReceiveTransaction(ClientTransactionReply request,
-                ServerCallContext context)
-        {
-
-            return Task.FromResult(ReceiveTransactionImpl(request));
-        }
-
-        ReceiveTransactionReply ReceiveTransactionImpl(ClientTransactionReply request)
-        {
-            if (request.ObjValues.Count == 1 && request.ObjValues[0].Key == "ABORT" && request.ObjValues[0].Value == -1)
-            {
-                DebugClass.Log("Transaction aborted.");
-            }
-            else
-            {
-                foreach (DADInt value in request.ObjValues)
-                {
-                    Console.WriteLine($"<{DADInt.ValueFieldNumber}, {DADInt.KeyFieldNumber}>");
-                }
-            }
-
-            return new ReceiveTransactionReply();
-        }
-
 
         /// <summary>
         /// Method to create a sort of LoadBalancer for the TMs.

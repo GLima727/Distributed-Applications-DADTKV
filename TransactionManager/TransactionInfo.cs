@@ -2,17 +2,25 @@
 {
     class TransactionInfo
     {
-        ClientTransactionRequest _clientTransactionRequest = new ClientTransactionRequest();
 
         List<string> missingLeases = new List<string>();
 
         int _transactionID = 0;
 
-        public ClientTransactionRequest ClientTransactionRequest
+        ClientTransactionRequest _transactionRequest = new ClientTransactionRequest();
+        public ClientTransactionRequest TransactionRequest
         {
-            get { lock (this) { return _clientTransactionRequest; } }
-            set { lock (this) { _clientTransactionRequest = value; } }
+            get { lock (this) { return _transactionRequest; } }
+            set { lock (this) { _transactionRequest = value; } }
         }
+
+        ClientTransactionReply _transactionReply = new ClientTransactionReply();
+        public ClientTransactionReply TransactionReply
+        {
+            get { lock (this) { return _transactionReply; } }
+            set { lock (this) { _transactionReply = value; } }
+        }
+
         public int TransactionID
         {
             get { lock (this) { return _transactionID; } }
@@ -24,11 +32,11 @@
             set { lock (this) { missingLeases = value; } }
         }
 
-        ManualResetEventSlim signalLSheet = new ManualResetEventSlim(false);
-        public ManualResetEventSlim SignalLSheet
+        ManualResetEventSlim _signalClient = new ManualResetEventSlim(false);
+        public ManualResetEventSlim SignalClient
         {
-            get { lock (this) { return signalLSheet; } }
-            set { lock (this) { signalLSheet = value; } }
+            get { lock (this) { return _signalClient; } }
+            set { lock (this) { _signalClient = value; } }
         }
 
         ManualResetEventSlim signalLTM = new ManualResetEventSlim(false);

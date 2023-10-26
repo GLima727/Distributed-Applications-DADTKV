@@ -1,8 +1,4 @@
-﻿using Grpc.Core;
-using Grpc.Net.Client;
-using System.Security.Cryptography;
-
-namespace DADTKV.transactionManager
+﻿namespace DADTKV.transactionManager
 {
     class TransactionEpoch
     {
@@ -10,6 +6,7 @@ namespace DADTKV.transactionManager
         private TransactionManager _transactionManager;
 
         private int _epochIndex = 0;
+
         private object _epochIndexLock = new object();
 
         public int EpochIndex
@@ -43,6 +40,7 @@ namespace DADTKV.transactionManager
 
         public void Run(List<Lease> leaseSheet)
         {
+            /*
             var info = new TransactionInfo();
             TransactionQueueInfo.Enqueue(info);
 
@@ -134,6 +132,7 @@ namespace DADTKV.transactionManager
             _transactionManager.TransactionEpochList[EpochIndex - 1].EpochSignal.Set();
 
             while (true) ;
+        */
         }
 
         public Dictionary<string, List<string>> lookAheadLeases(Lease lease, int lease_index, List<Lease> leaseSheet)
