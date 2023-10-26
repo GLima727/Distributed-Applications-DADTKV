@@ -120,6 +120,14 @@ namespace DADTKV.transactionManager
             set { lock (_transactionIDLock) { _transactionID = value; } }
         }
 
+        private List<TransactionEpoch> _transactionEpochList = new List<TransactionEpoch>();
+        private object _transactionEpochLock = new object();
+
+        public List<TransactionEpoch> TransactionEpochList
+        {
+            get { lock (_transactionEpochLock) { return _transactionEpochList; } }
+            set { lock (_transactionEpochLock) { _transactionEpochList = value; } }
+        }
 
         private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
         private object _dadIntsLock = new object();
