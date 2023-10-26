@@ -36,7 +36,7 @@ namespace DADTKV.transactionManager
             DebugClass.Log("[SubmitTransactionImpl] Received transaction.");
             TransactionInfo transaction = new TransactionInfo();
             transaction.TransactionID = _transId++;
-            transaction.Info = request;
+            transaction.ClientTransactionRequest = request;
 
 
             ClientTransactionReply reply = new ClientTransactionReply();

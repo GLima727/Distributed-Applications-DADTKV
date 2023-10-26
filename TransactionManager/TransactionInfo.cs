@@ -2,16 +2,16 @@
 {
     class TransactionInfo
     {
-        ClientTransactionRequest _info = new ClientTransactionRequest();
+        ClientTransactionRequest _clientTransactionRequest = new ClientTransactionRequest();
 
         List<string> missingLeases = new List<string>();
 
         int _transactionID = 0;
 
-        public ClientTransactionRequest Info
+        public ClientTransactionRequest ClientTransactionRequest
         {
-            get { lock (this) { return _info; } }
-            set { lock (this) { _info = value; } }
+            get { lock (this) { return _clientTransactionRequest; } }
+            set { lock (this) { _clientTransactionRequest = value; } }
         }
         public int TransactionID
         {
