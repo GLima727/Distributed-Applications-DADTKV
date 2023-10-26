@@ -78,7 +78,7 @@ namespace DADTKV.transactionManager
             }
             else
             {
-                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueueInfo.Enqueue(transaction);
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRound].TransactionQueue.Enqueue(transaction);
                 if (_transactionManager.CurrentRound != 0)
                 {
                     _transactionManager.TransactionEpochList[_transactionManager.CurrentRound - 1].EpochSignal.Wait();
