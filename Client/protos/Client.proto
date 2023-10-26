@@ -1,26 +1,28 @@
 syntax = "proto3";
 
-service ClientServerService {
-	rpc SubmitTransaction (ClientTransactionRequest) returns (ClientTransactionReply);
-	rpc Status (ClientStatusRequest) returns (ClientStatusReply);
+message DADInt {
+  string key = 1;
+  int32 value = 2;
 }
 
 message ClientTransactionRequest {
-	string clientId = 1;
-	repeated string readOperations = 2;
-	repeated DADInt writeOperations = 3;
+  string clientId = 1;
+  repeated string readOperations = 2;
+  repeated DADInt writeOperations = 3;
 }
 
-message ClientTransactionReply {
-	repeated int32 objValues = 1;
-	DADInt abort = 2;
-}
+message ClientTransactionReply { repeated DADInt objValues = 1; }
+
+message ReceiveTransactionReply {}
 
 message ClientStatusRequest {}
 
 message ClientStatusReply {}
 
-message DADInt {
-	string key = 1;
-	int32 value = 2;
+service ClientServerService {
+  rpc SubmitTransaction(ClientTransactionRequest)
+      returns (ClientTransactionReply);
+  rpc ReceiveTransaction(ClientTransactionReply)
+      returns (ReceiveTransactionReply);
+  rpc Status(ClientStatusRequest) returns (ClientStatusReply);
 }
