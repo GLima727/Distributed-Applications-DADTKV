@@ -55,15 +55,14 @@ namespace DADTKV.transactionManager
                 {
                     if (lease.LeasedResources.Contains((resource)))
                     {
-                        DebugClass.Log($"[LM - TM] [Send resources] Needs to send {resource} to {lease.TmId}.");
-                        // Theorodical this if is useless
-                        if (!leasesToSend.ContainsKey(lease.TmId))
-                        {
-                            leasesToSend[lease.TmId] = new List<string>();
-                        }
-
                         if (lease.TmId != _transactionManager.Id)
                         {
+                            if (!leasesToSend.ContainsKey(lease.TmId))
+                            {
+                                leasesToSend[lease.TmId] = new List<string>();
+                            }
+
+                            DebugClass.Log($"[LM - TM] [Send resources] Needs to send {resource} to {lease.TmId}.");
                             leasesToSend[lease.TmId].Append(resource);
                         }
 

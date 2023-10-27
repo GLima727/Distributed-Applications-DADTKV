@@ -22,7 +22,7 @@ namespace DADTKV.transactionManager
             DebugClass.Log($"[URBroadCast Server] RECEIVING URBS FROM {request.Sender} ");
 
             //if the request is older than the tm or the tm is the one that created the request dont do anything
-            if ( request.Sender == _transactionManager.Id)
+            if (request.Sender == _transactionManager.Id)
             {
                 DebugClass.Log($"[URBroadCast Server] RECEIVING URBS but the sender is the same as me {request.Sender}");
                 return new URBroadCastReply();
@@ -36,7 +36,7 @@ namespace DADTKV.transactionManager
                 }
 
 
-                 _transactionManager.AcksReceived[request.Sender] += 1;
+                _transactionManager.AcksReceived[request.Sender] += 1;
 
                 DebugClass.Log($"[URBroadCast Server] COUNT? {_transactionManager.AcksReceived[request.Sender]}");
 
@@ -80,13 +80,15 @@ namespace DADTKV.transactionManager
                         _transactionManager.DadInts[message.Key] = message.Value;
                     }
                     //reinicia e já pode receber desse criador
+                }
+
+                if (_transactionManager.AcksReceived[request.Sender] == _transactionManager.TmsClients.Count - 1)
+                {
                     _transactionManager.AcksReceived[request.Sender] = 0;
                 }
             }
-            
 
-            URBroadCastReply reply = new URBroadCastReply();
-            return reply;
+            return new URBroadCastReply();
         }
 
         public override Task<PropagateLeasesReply> PropagateLeases(PropagateLeasesRequest propagateLeasesRequest, ServerCallContext context)
@@ -96,14 +98,16 @@ namespace DADTKV.transactionManager
 
         public PropagateLeasesReply PropagateLeasesImpl(PropagateLeasesRequest request)
         {
-            Monitor.Enter(_transactionManager.CrossLock);
             DebugClass.Log($"[Propagate Lease] received a lease.");
+            DebugClass.Log($"[Propagate Lease] have lock.");
             PropagateLeasesReply reply = new PropagateLeasesReply();
+
+            int current_round = _transactionManager.CurrentRound;
+
             foreach (var tm in _transactionManager.TmsClients)
             {
-                if (tm.Key == request.SenderId && tm.Value.Item2.Contains(_transactionManager.CurrentRound))
+                if (tm.Key == request.SenderId && tm.Value.Item2.Contains(current_round))
                 {
-                    Monitor.Exit(_transactionManager.CrossLock);
                     return reply;
                 }
             }
@@ -114,60 +118,43 @@ namespace DADTKV.transactionManager
                 try
                 {
                     DebugClass.Log("[Propagate Lease] The Lease is for me :).");
+                    Monitor.Enter(_transactionManager.TMLock);
                     foreach (string resourceLease in request.Lease.LeasedResources)
                     {
-                        _transactionManager.CurrentTrans.MissingLeases.Remove(resourceLease);
                         _transactionManager.LeasesAvailable.Add(resourceLease);
                     }
+                    Monitor.Exit(_transactionManager.TMLock);
 
-                    if (_transactionManager.CurrentTrans.MissingLeases.Count == 0)
-                    {
-                        DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
-                        _transactionManager.CurrentTrans.SignalLTM.Set();
-                    }
-                    else
-                    {
-                        DebugClass.Log($"[Propagate Lease] We don't have all.");
-                    }
-                    foreach (var a in _transactionManager.CurrentTrans.MissingLeases)
-                    {
-                        DebugClass.Log($"[Propagate Lease] Missing {a}.");
-                    }
+                    DebugClass.Log($"[Propagate Lease] Notify currentTrans we received a lease.");
+                    _transactionManager.CurrentTrans.SignalLTM.Set();
                 }
                 catch (Exception e)
                 {
                     DebugClass.Log(e.Message);
                 }
-
             }
             else if (request.Id > _lastPropagateId)
             {
                 DebugClass.Log($"[Propagate Lease] The Lease is not for me :_.");
-                lock (this)
-                {
-                    _lastPropagateId = request.Id;
-                }
+                _lastPropagateId = request.Id;
 
                 PropagateLeasesRequest progRequest = new PropagateLeasesRequest();
                 progRequest.Lease = request.Lease;
                 progRequest.Id = request.Id;
                 progRequest.SenderId = _transactionManager.Id;
 
-                // checks if any transaction manager can respond to it in this timeslot
-                lock (_transactionManager)
+                DebugClass.Log($"Enter lock _transactionManager");
+                // propagate the leases 
+                foreach (var tm in _transactionManager.TmsClients)
                 {
-                    foreach (var tm in _transactionManager.TmsClients)
+                    if (!tm.Value.Item2.Contains(current_round))
                     {
-                        if (!tm.Value.Item2.Contains(_transactionManager.CurrentRound))
-                        {
-                            //if you dont suspect the tm at this timeslot you can ask for the leases
-                            tm.Value.Item1.PropagateLeases(progRequest);
-                        }
+                        tm.Value.Item1.PropagateLeases(progRequest);
                     }
                 }
             }
 
-            Monitor.Exit(_transactionManager.CrossLock);
+            DebugClass.Log("[Propagate Lease] Exit.");
             return reply;
         }
 

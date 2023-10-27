@@ -20,12 +20,10 @@ namespace DADTKV.transactionManager
         public int Port { get { return _port; } set { _port = value; } }
 
         private int _timeSlotD = 0;
-        private object _timeSlotDLock = new object();
-        public int TimeSlotD { get { lock (_timeSlotDLock) { return _timeSlotD; } } set { lock (_timeSlotDLock) { _timeSlotD = value; } } }
+        public int TimeSlotD { get { return _timeSlotD; } set { _timeSlotD = value; } }
 
         private int _timeSlotN = 0;
-        private object _timeSlotNLock = new object();
-        public int TimeSlotN { get { lock (_timeSlotNLock) { return _timeSlotN; } } set { lock (_timeSlotNLock) { _timeSlotN = value; } } }
+        public int TimeSlotN { get { return _timeSlotN; } set { _timeSlotN = value; } }
 
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
@@ -34,12 +32,10 @@ namespace DADTKV.transactionManager
         public int NumSlot { get { return _numSlot; } set { _numSlot = value; } }
 
         private int _currentRound = 0;
-        private object _currentRoundLock = new object();
-        public int CurrentRound { get { lock (_currentRoundLock) { return _currentRound; } } set { lock (_currentRoundLock) { _currentRound = value; } } }
+        public int CurrentRound { get { return _currentRound; } set { _currentRound = value; } }
 
         private int _currentRoundPaxos = 0;
-        private object _currentRoundPaxosLock = new object();
-        public int CurrentRoundPaxos { get { lock (_currentRoundPaxosLock) { return _currentRoundPaxos; } } set { lock (_currentRoundPaxosLock) { _currentRoundPaxos = value; } } }
+        public int CurrentRoundPaxos { get { return _currentRoundPaxos; } set { _currentRoundPaxos = value; } }
 
         private List<int> _roundsDowns = new List<int>();
         public List<int> RoundsDowns { get { return _roundsDowns; } set { _roundsDowns = value; } }
@@ -57,38 +53,34 @@ namespace DADTKV.transactionManager
         public List<Tuple<int, string>> SusList { get { return _susList; } set { _susList = value; } }
 
         private List<string> _leasesAvailable = new List<string>();
-        private object _leaseListLock = new object();
         public List<string> LeasesAvailable
         {
-            get { lock (_leaseListLock) { return _leasesAvailable; } }
-            set { lock (_leaseListLock) { _leasesAvailable = value; } }
+            get { return _leasesAvailable; }
+            set { _leasesAvailable = value; }
         }
 
         private int _numberLms;
         public int NumberLms { get { return _numberLms; } set { _numberLms = value; } }
 
         private TransactionInfo _currentTrans = new TransactionInfo();
-        private object _currentTransLock = new object();
         public TransactionInfo CurrentTrans
         {
-            get { lock (_currentTransLock) { return _currentTrans; } }
-            set { lock (_currentTransLock) { _currentTrans = value; } }
+            get { return _currentTrans; }
+            set { _currentTrans = value; }
         }
 
         private List<TransactionEpoch> _transactionEpochList = new List<TransactionEpoch>();
-        private object _transactionEpochLock = new object();
         public List<TransactionEpoch> TransactionEpochList
         {
-            get { lock (_transactionEpochLock) { return _transactionEpochList; } }
-            set { lock (_transactionEpochLock) { _transactionEpochList = value; } }
+            get { return _transactionEpochList; }
+            set { _transactionEpochList = value; }
         }
 
         private Dictionary<string, int> _dadInts = new Dictionary<string, int>();
-        private object _dadIntsLock = new object();
         public Dictionary<string, int> DadInts
         {
-            get { lock (_dadIntsLock) { return _dadInts; } }
-            set { lock (_dadIntsLock) { _dadInts = value; } }
+            get { return _dadInts; }
+            set { _dadInts = value; }
         }
 
         //LM ID, Client
@@ -110,15 +102,15 @@ namespace DADTKV.transactionManager
         }
 
         private Dictionary<string, int> _acksReceived = new Dictionary<string, int>();
-        private object _acksReceivedLock = new object();
         public Dictionary<string, int> AcksReceived
         {
-            get { lock (_acksReceivedLock) { return _acksReceived; } }
-            set { lock (_acksReceivedLock) { _acksReceived = value; } }
+            get { return _acksReceived; }
+            set { _acksReceived = value; }
         }
 
         public object LMTMLock = new object();
-        public object CrossLock = new object();
+        public object URBLock = new object();
+        public object TMLock = new object();
 
         public TransactionManager()
         {

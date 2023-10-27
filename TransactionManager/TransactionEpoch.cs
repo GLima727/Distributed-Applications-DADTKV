@@ -11,8 +11,8 @@
 
         public int EpochIndex
         {
-            get { lock (_epochIndexLock) { return _epochIndex; } }
-            set { lock (_epochIndexLock) { _epochIndex = value; } }
+            get { return _epochIndex; }
+            set { _epochIndex = value; }
         }
 
         private ManualResetEventSlim _epochSignal = new ManualResetEventSlim(false);
@@ -20,8 +20,8 @@
 
         public ManualResetEventSlim EpochSignal
         {
-            get { lock (_epochSignalLock) { return _epochSignal; } }
-            set { lock (_epochSignalLock) { _epochSignal = value; } }
+            get { return _epochSignal; }
+            set { _epochSignal = value; }
         }
 
         private List<TransactionInfo> _transactionQueue = new List<TransactionInfo>();
@@ -29,13 +29,26 @@
 
         public List<TransactionInfo> TransactionQueue
         {
-            get { lock (_transactionQueueLock) { return _transactionQueue; } }
-            set { lock (_transactionQueueLock) { _transactionQueue = value; } }
+            get { return _transactionQueue; }
+            set { _transactionQueue = value; }
         }
 
         public TransactionEpoch(TransactionManager transactionManager)
         {
             _transactionManager = transactionManager;
+        }
+
+        private TransactionInfo lookForTransaction(int id)
+        {
+            foreach (var t in TransactionQueue)
+            {
+                if (t.TransactionID == id)
+                {
+                    return t;
+                }
+            }
+
+            return new TransactionInfo();
         }
 
         public void Run(List<Lease> leaseSheet)
@@ -52,50 +65,52 @@
                 // Check if this lease is for this tmId
                 if (lease.TmId == _transactionManager.Id)
                 {
-                    TransactionInfo transaction = new TransactionInfo();
-                    foreach (var t in TransactionQueue)
-                    {
-                        if (t.TransactionID == lease.TransactionId)
-                        {
-                            transaction = t;
-                            break;
-                        }
-                    }
-
+                    var transaction = lookForTransaction(lease.TransactionId);
                     _transactionManager.CurrentTrans = transaction;
 
-                    // if is the first dont look back
-                    if (lease_index == 0 && _transactionManager.TimeSlotN == 1)
+                    // check if someone have the leases we need before us
+                    var missingLeases = lookBackLeases(lease, lease_index, leaseSheet);
+
+                    // add the ones we saw that nobody have 
+                    var leases_to_add = transaction.MissingLeases.Except(missingLeases).ToList();
+                    transaction.MissingLeases = missingLeases;
+                    
+                    // add that ones 
+                    Monitor.Enter(_transactionManager.TMLock);
+                    foreach (var l in leases_to_add)
                     {
-                        _transactionManager.LeasesAvailable = transaction.MissingLeases;
-                        DebugClass.Log("[Run] I was the first to receive this lease.");
+                        if (!_transactionManager.LeasesAvailable.Contains(l))
+                            _transactionManager.LeasesAvailable.Add(l);
                     }
-                    else
+                    Monitor.Exit(_transactionManager.TMLock);
+
+                    // before wait check again what i am missing
+                    foreach (var l in _transactionManager.LeasesAvailable)
                     {
-                        // check if someone have the leases we need
-                        var missingLeases = lookBackLeases(lease, lease_index, leaseSheet);
-
-                        var leases_to_add = transaction.MissingLeases.Except(missingLeases).ToList();
-                        transaction.MissingLeases = missingLeases;
-
-                        foreach (var l in leases_to_add)
+                        DebugClass.Log($"[Run] we have {l}");
+                        if (transaction.MissingLeases.Contains(l))
                         {
-                            if (!_transactionManager.LeasesAvailable.Contains(l))
-                                _transactionManager.LeasesAvailable.Add(l);
+                            transaction.MissingLeases.Remove(l);
                         }
+                    }
 
-                        foreach (var l in transaction.MissingLeases)
-                        {
-                            DebugClass.Log($"[Run] missing {l}");
-                        }
+                    while (transaction.MissingLeases.Count != 0)
+                    {
+                        DebugClass.Log("[Run] we need to wait to get leases from others tms");
+                        // Wait for others tm to give leases
+                        transaction.SignalLTM.Wait();
 
-                        if (transaction.MissingLeases.Count != 0)
+                        Monitor.Enter(_transactionManager.TMLock);
+                        foreach (var l in _transactionManager.LeasesAvailable)
                         {
-                            DebugClass.Log("[Run] we need to wait to get leases from others tms");
-                            // Wait for others tm to give leases
-                            transaction.SignalLTM.Wait();
-                            transaction.SignalLTM.Reset();
+                            if (transaction.MissingLeases.Contains(l))
+                            {
+                                transaction.MissingLeases.Remove(l);
+                            }
                         }
+                        Monitor.Exit(_transactionManager.TMLock);
+
+                        transaction.SignalLTM.Reset();
                     }
 
                     transaction.TransactionReply = _transactionManager.executeOperations(transaction.TransactionRequest);
@@ -118,12 +133,14 @@
                         // here you ask for leases but dont send the request if you suspect the one you are asking
                         _transactionManager.PropagateLeaseResource(leases.Key, leases.Value);
 
+                        Monitor.Enter(_transactionManager.TMLock);
                         // remove A from ("A","B") and so on
                         foreach (string resource in leases.Value)
                         {
                             DebugClass.Log($"[Run] Remove lease {resource}.");
                             _transactionManager.LeasesAvailable.Remove(resource);
                         }
+                        Monitor.Exit(_transactionManager.TMLock);
                     }
                 }
 
