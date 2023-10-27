@@ -27,7 +27,7 @@
                 return _client.TmsChannels[2];
             else
                 return _client.TmsChannels[3];
-            //    return _client.TmsChannels[1];
+            //return _client.TmsChannels[0];
         }
 
         /// <summary>
@@ -50,23 +50,26 @@
             }
 
             var tm = GetTransactionManager();
-            var reply = tm.SubmitTransaction(request);
-
-            if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "OK" && reply.ObjValues[0].Value == -1)
+            SubmitTransactions(tm, request).ContinueWith(task =>
             {
-                DebugClass.Log("Transaction received.");
-            }
-            else if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "ABORT" && reply.ObjValues[0].Value == -1)
-            {
-                DebugClass.Log("Transaction aborted.");
-            }
-            else
-            {
-                foreach (DADInt v in reply.ObjValues)
+                ClientTransactionReply reply = task.Result;
+                if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "ABORT" && reply.ObjValues[0].Value == -1)
                 {
-                    Console.WriteLine($"<{v.Key}, {v.Value}>");
+                    DebugClass.Log("Transaction aborted.");
                 }
-            }
+                else
+                {
+                    foreach (DADInt v in reply.ObjValues)
+                    {
+                        Console.WriteLine($"<{v.Key}, {v.Value}>");
+                    }
+                }
+            } );
+        }
+
+        static async Task<ClientTransactionReply> SubmitTransactions(ClientServerService.ClientServerServiceClient client, ClientTransactionRequest request)
+        {
+            return await client.SubmitTransactionAsync(request);
         }
 
         /// <summary>
@@ -81,6 +84,5 @@
                 tm.Status(statusRequest);
             }
         }
-
     }
 }

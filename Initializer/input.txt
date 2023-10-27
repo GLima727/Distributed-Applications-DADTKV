@@ -1,17 +1,30 @@
 P client1 C script1
 P client2 C script2
 P client3 C script3
+<<<<<<< HEAD
+P client4 C script4
 P TM1 T http://localhost:8090
 P TM2 T http://localhost:8091
 P TM3 T http://localhost:8092
+P TM4 T http://localhost:8093
+=======
+P TM1 T http://localhost:8090
+P TM2 T http://localhost:8091
+P TM3 T http://localhost:8092
+>>>>>>> f24a5272354db6d561a4f2866286dac1426b8cab
 P lease1 L http://localhost:8080
 P lease2 L http://localhost:8081
 P lease3 L http://localhost:8082
 
 S 10000
 
+<<<<<<< HEAD
+T 02:43:20
+=======
 T 16:10:00
+>>>>>>> f24a5272354db6d561a4f2866286dac1426b8cab
 
 D 10000 
 
-F 1 N N N N N N
+F 1 N N N N N
+
