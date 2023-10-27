@@ -74,7 +74,7 @@
                     // add the ones we saw that nobody have 
                     var leases_to_add = transaction.MissingLeases.Except(missingLeases).ToList();
                     transaction.MissingLeases = missingLeases;
-                    
+
                     // add that ones 
                     Monitor.Enter(_transactionManager.TMLock);
                     foreach (var l in leases_to_add)
@@ -98,7 +98,19 @@
                     {
                         DebugClass.Log("[Run] we need to wait to get leases from others tms");
                         // Wait for others tm to give leases
-                        transaction.SignalLTM.Wait();
+                        bool eventSet = transaction.SignalLTM.Wait(_transactionManager.TimeSlotD * 2);
+
+                        if (!eventSet)
+                        {
+                            transaction.status = -1;
+                            transaction.SignalClient.Set();
+
+                            foreach (var t in TransactionQueue)
+                            {
+                                t.status = -1;
+                                t.SignalClient.Set();
+                            }
+                        }
 
                         Monitor.Enter(_transactionManager.TMLock);
                         foreach (var l in _transactionManager.LeasesAvailable)
@@ -114,6 +126,8 @@
                     }
 
                     transaction.TransactionReply = _transactionManager.executeOperations(transaction.TransactionRequest);
+                    transaction.status = 1;
+                    TransactionQueue.Remove(transaction);
                     transaction.SignalClient.Set();
 
                     // Send Leases to anyone who needs it

@@ -33,70 +33,83 @@ namespace DADTKV.transactionManager
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
         {
-            DebugClass.Log("[SubmitTransactionImpl] Received transaction.");
-            TransactionInfo transaction = new TransactionInfo();
-            transaction.TransactionID = TransactionID++;
-            transaction.TransactionRequest = request;
-
-
+            bool done = false;
             ClientTransactionReply reply = new ClientTransactionReply();
-            if (TmIsDown())
-            {
-                DebugClass.Log("[SubmitTransactionImpl] This TM is down.");
-                DADInt dADInt = new DADInt();
-                dADInt.Key = "ABORT";
-                dADInt.Value = -1;
-                reply.ObjValues.Add(dADInt);
-                return reply;
-            }
 
-            Monitor.Enter(_transactionManager.TMLock);
-            foreach (string readOp in request.ReadOperations)
+            while (!done)
             {
-                DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] Needs to access {readOp}.");
-                if (!_transactionManager.LeasesAvailable.Contains(readOp))
+                DebugClass.Log("[SubmitTransactionImpl] Received transaction.");
+                TransactionInfo transaction = new TransactionInfo();
+                transaction.TransactionID = TransactionID++;
+                transaction.TransactionRequest = request;
+
+
+                if (TmIsDown())
                 {
-                    DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] doesn't have {readOp}.");
-                    transaction.MissingLeases.Add(readOp);
+                    DebugClass.Log("[SubmitTransactionImpl] This TM is down.");
+                    DADInt dADInt = new DADInt();
+                    dADInt.Key = "ABORT";
+                    dADInt.Value = -1;
+                    reply.ObjValues.Add(dADInt);
+                    return reply;
+                }
+
+                Monitor.Enter(_transactionManager.TMLock);
+                foreach (string readOp in request.ReadOperations)
+                {
+                    DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] Needs to access {readOp}.");
+                    if (!_transactionManager.LeasesAvailable.Contains(readOp))
+                    {
+                        DebugClass.Log($"[SubmitTransactionImpl] [Read transactions] doesn't have {readOp}.");
+                        transaction.MissingLeases.Add(readOp);
+                    }
+                }
+
+                foreach (DADInt dadInt in request.WriteOperations)
+                {
+                    DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] Needs to access {dadInt.Key}.");
+                    if (!_transactionManager.LeasesAvailable.Contains(dadInt.Key))
+                    {
+                        DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] doesn't have {dadInt.Key}.");
+                        transaction.MissingLeases.Add(dadInt.Key);
+                    }
+                }
+                Monitor.Exit(_transactionManager.TMLock);
+
+                int current_round_paxos = _transactionManager.CurrentRoundPaxos;
+
+                DebugClass.Log($"[SubmitTransactionImpl] missing {transaction.MissingLeases.Count}.");
+                if (transaction.MissingLeases.Count == 0)
+                {
+                    DebugClass.Log($"[SubmitTransactionImpl] have lease.");
+                    reply = _transactionManager.executeOperations(request);
+                    done = true;
+                }
+                else
+                {
+
+                    Monitor.Enter(_transactionManager.LMTMLock);
+                    DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease in round {current_round_paxos}.");
+                    if (_transactionManager.CurrentRoundPaxos != 0)
+                    {
+                        _transactionManager.TransactionEpochList[current_round_paxos - 1].EpochSignal.Wait();
+                    }
+
+                    _transactionManager.TransactionEpochList[current_round_paxos].TransactionQueue.Add(transaction);
+                    RequestLeases(transaction.MissingLeases, transaction.TransactionID);
+                    Monitor.Exit(_transactionManager.LMTMLock);
+                    transaction.SignalClient.Wait();
+
+                    if (transaction.status == -1)
+                    {
+                        done = false;
+                    } else {
+                        done = true;
+                        reply = transaction.TransactionReply;
+                    }
                 }
             }
 
-            foreach (DADInt dadInt in request.WriteOperations)
-            {
-                DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] Needs to access {dadInt.Key}.");
-                if (!_transactionManager.LeasesAvailable.Contains(dadInt.Key))
-                {
-                    DebugClass.Log($"[SubmitTransactionImpl] [Write transactions] doesn't have {dadInt.Key}.");
-                    transaction.MissingLeases.Add(dadInt.Key);
-                }
-            }
-            Monitor.Exit(_transactionManager.TMLock);
-
-            int current_round_paxos = _transactionManager.CurrentRoundPaxos;
-
-            DebugClass.Log($"[SubmitTransactionImpl] missing {transaction.MissingLeases.Count}.");
-            if (transaction.MissingLeases.Count == 0)
-            {
-                DebugClass.Log($"[SubmitTransactionImpl] have lease.");
-                reply = _transactionManager.executeOperations(request);
-            }
-            else
-            {
-
-                Monitor.Enter(_transactionManager.LMTMLock);
-                DebugClass.Log($"[SubmitTransactionImpl] doesn't have lease in round {current_round_paxos}.");
-                if (_transactionManager.CurrentRoundPaxos != 0)
-                {
-                    _transactionManager.TransactionEpochList[current_round_paxos - 1].EpochSignal.Wait();
-                }
-
-                _transactionManager.TransactionEpochList[current_round_paxos].TransactionQueue.Add(transaction);
-                RequestLeases(transaction.MissingLeases, transaction.TransactionID);
-                Monitor.Exit(_transactionManager.LMTMLock);
-                transaction.SignalClient.Wait();
-                reply = transaction.TransactionReply;
-
-            }
             return reply;
         }
 

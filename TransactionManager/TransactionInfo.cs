@@ -10,40 +10,43 @@
         ClientTransactionRequest _transactionRequest = new ClientTransactionRequest();
         public ClientTransactionRequest TransactionRequest
         {
-            get { lock (this) { return _transactionRequest; } }
-            set { lock (this) { _transactionRequest = value; } }
+            get { return _transactionRequest; }
+            set { _transactionRequest = value; }
         }
 
         ClientTransactionReply _transactionReply = new ClientTransactionReply();
         public ClientTransactionReply TransactionReply
         {
-            get { lock (this) { return _transactionReply; } }
-            set { lock (this) { _transactionReply = value; } }
+            get { return _transactionReply; }
+            set { _transactionReply = value; }
         }
 
         public int TransactionID
         {
-            get { lock (this) { return _transactionID; } }
-            set { lock (this) { _transactionID = value; } }
+            get { return _transactionID; }
+            set { _transactionID = value; }
         }
         public List<string> MissingLeases
         {
-            get { lock (this) { return missingLeases; } }
-            set { lock (this) { missingLeases = value; } }
+            get { return missingLeases; }
+            set { missingLeases = value; }
         }
 
         ManualResetEventSlim _signalClient = new ManualResetEventSlim(false);
         public ManualResetEventSlim SignalClient
         {
-            get { lock (this) { return _signalClient; } }
-            set { lock (this) { _signalClient = value; } }
+            get { return _signalClient; }
+            set { _signalClient = value; }
         }
 
         ManualResetEventSlim signalLTM = new ManualResetEventSlim(false);
         public ManualResetEventSlim SignalLTM
         {
-            get { lock (this) { return signalLTM; } }
-            set { lock (this) { signalLTM = value; } }
+            get { return signalLTM; }
+            set { signalLTM = value; }
         }
+
+        public int status = 0;
+
     }
 }
