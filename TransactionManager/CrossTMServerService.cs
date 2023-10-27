@@ -79,13 +79,14 @@ namespace DADTKV.transactionManager
 
         public PropagateLeasesReply PropagateLeasesImpl(PropagateLeasesRequest request)
         {
-
+            Monitor.Enter(_transactionManager.CrossLock);
             DebugClass.Log($"[Propagate Lease] received a lease.");
             PropagateLeasesReply reply = new PropagateLeasesReply();
             foreach (var tm in _transactionManager.TmsClients)
             {
                 if (tm.Key == request.SenderId && tm.Value.Item2.Contains(_transactionManager.NRound))
                 {
+                    Monitor.Exit(_transactionManager.CrossLock);
                     return reply;
                 }
             }
@@ -106,7 +107,9 @@ namespace DADTKV.transactionManager
                     {
                         DebugClass.Log($"[Propagate Lease] We have all lets gooooo.");
                         _transactionManager.CurrentTrans.SignalLTM.Set();
-                    } else {
+                    }
+                    else
+                    {
                         DebugClass.Log($"[Propagate Lease] We don't have all.");
                     }
                     foreach (var a in _transactionManager.CurrentTrans.MissingLeases)
@@ -147,6 +150,7 @@ namespace DADTKV.transactionManager
                 }
             }
 
+            Monitor.Exit(_transactionManager.CrossLock);
             return reply;
         }
 

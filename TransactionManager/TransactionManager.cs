@@ -118,6 +118,7 @@ namespace DADTKV.transactionManager
         }
 
         public object LMTMLock = new object();
+        public object CrossLock = new object();
 
         public TransactionManager()
         {
