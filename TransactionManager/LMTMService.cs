@@ -23,20 +23,6 @@ namespace DADTKV.transactionManager
             DebugClass.Log("[LM - TM] Received a lease sheet.");
             Monitor.Enter(_transactionManager.LMTMLock);
 
-            bool flag = false;
-            foreach (var l in request.LeaseList.Leases.ToList())
-            {
-                if (l.TmId == _transactionManager.Id)
-                {
-                    flag = true;
-                }
-            }
-
-            if (!flag)
-            {
-                return new ReceiveLeaseListResponse();
-            }
-
             lock (this)
             {
                 if (_lastLeaseId >= request.RequestId)
@@ -59,7 +45,6 @@ namespace DADTKV.transactionManager
                 _lastLeaseId = request.RequestId;
             }
 
-            _transactionManager.NRound += 1;
 
             Dictionary<string, List<string>> leasesToSend = new Dictionary<string, List<string>>();
 
@@ -72,6 +57,11 @@ namespace DADTKV.transactionManager
                     {
                         DebugClass.Log($"[LM - TM] [Send resources] Needs to send {resource} to {lease.TmId}.");
                         // Theorodical this if is useless
+                        if (!leasesToSend.ContainsKey(lease.TmId))
+                        {
+                            leasesToSend[lease.TmId] = new List<string>();
+                        }
+
                         if (lease.TmId != _transactionManager.Id)
                         {
                             leasesToSend[lease.TmId].Append(resource);
@@ -88,12 +78,28 @@ namespace DADTKV.transactionManager
                 _transactionManager.PropagateLeaseResource(val.Key, val.Value);
             }
 
+            // Check if i am going to do something
+            bool haveTrans = false;
+            foreach (var l in request.LeaseList.Leases.ToList())
+            {
+                if (l.TmId == _transactionManager.Id)
+                {
+                    haveTrans = true;
+                }
+            }
+            if (!haveTrans)
+            {
+                Monitor.Exit(_transactionManager.LMTMLock);
+                return new ReceiveLeaseListResponse();
+            }
+
             // Run epoch run
             try
             {
                 DebugClass.Log("[LM - TM] Set signal.");
-                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos].EpochSignal.Set();
-                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos].Run(request.LeaseList.Leases.ToList());
+                _transactionManager.CurrentRoundPaxos += 1;
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos - 1].EpochSignal.Set();
+                _transactionManager.TransactionEpochList[_transactionManager.CurrentRoundPaxos - 1].Run(request.LeaseList.Leases.ToList());
             }
             catch (Exception e)
             {

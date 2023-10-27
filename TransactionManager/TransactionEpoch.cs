@@ -65,7 +65,7 @@
                     _transactionManager.CurrentTrans = transaction;
 
                     // if is the first dont look back
-                    if (lease_index == 0 && _transactionManager.NRound == 1)
+                    if (lease_index == 0 && _transactionManager.TimeSlotN == 1)
                     {
                         _transactionManager.LeasesAvailable = transaction.MissingLeases;
                         DebugClass.Log("[Run] I was the first to receive this lease.");

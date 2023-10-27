@@ -28,7 +28,7 @@ namespace DADTKV.transactionManager
 
         public bool TmIsDown()
         {
-            return _transactionManager.RoundsDowns.Contains(_transactionManager.TimeSlot);
+            return _transactionManager.RoundsDowns.Contains(_transactionManager.CurrentRound);
         }
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)

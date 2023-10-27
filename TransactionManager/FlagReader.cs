@@ -49,7 +49,7 @@ namespace DADTKV.transactionManager
 
         public static void TimeSlotReader(string arg, TransactionManager tm)
         {
-            tm.TimeSlot = int.Parse(arg);
+            tm.TimeSlotD = int.Parse(arg);
         }
 
         public static void NumSlotReader(string arg, TransactionManager tm)

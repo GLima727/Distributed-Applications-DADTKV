@@ -19,13 +19,13 @@ namespace DADTKV.transactionManager
 
         public int Port { get { return _port; } set { _port = value; } }
 
-        private int _timeSlot = 0;
-        private object _timeSlotLock = new object();
-        public int TimeSlot { get { lock (_timeSlotLock) { return _timeSlot; } } set { lock (_timeSlotLock) { _timeSlot = value; } } }
+        private int _timeSlotD = 0;
+        private object _timeSlotDLock = new object();
+        public int TimeSlotD { get { lock (_timeSlotDLock) { return _timeSlotD; } } set { lock (_timeSlotDLock) { _timeSlotD = value; } } }
 
-        private int _nRound = 0;
-        private object _nRoundlock = new object();
-        public int NRound { get { lock (_nRoundlock) { return _nRound; } } set { lock (_nRoundlock) { _nRound = value; } } }
+        private int _timeSlotN = 0;
+        private object _timeSlotNLock = new object();
+        public int TimeSlotN { get { lock (_timeSlotNLock) { return _timeSlotN; } } set { lock (_timeSlotNLock) { _timeSlotN = value; } } }
 
         private int _propagateId = 0;
         public int PropagateId { get { return _propagateId; } set { _propagateId = value; } }
@@ -203,7 +203,7 @@ namespace DADTKV.transactionManager
             DebugClass.Log("Wall time completed.");
 
             // Start the clock
-            _clock.Interval = _timeSlot;
+            _clock.Interval = _timeSlotD;
             _clock.AutoReset = true;
             _clock.Elapsed += TimeSlotRound;
             _clock.Start();
@@ -234,7 +234,7 @@ namespace DADTKV.transactionManager
             {
                 foreach (var tm in TmsClients)
                 {
-                    if (!tm.Value.Item2.Contains(TimeSlot) && tm.Key != Id)
+                    if (!tm.Value.Item2.Contains(CurrentRound) && tm.Key != Id)
                     {
                         DebugClass.Log($"[Propagate Lease tm function] send lease {tm.Key} {tm.Value.Item2}");
                         //if you dont suspect the tm at this timeslot you can ask for the leases
@@ -261,7 +261,7 @@ namespace DADTKV.transactionManager
 
                 urbroadcastRequest.Sender = Id;
                 urbroadcastRequest.Message.AddRange(message);
-                urbroadcastRequest.TimeStamp = TimeSlot;
+                urbroadcastRequest.TimeStamp = CurrentRound;
                 tm.Value.Item1.URBroadCast(urbroadcastRequest);
             }
         }
