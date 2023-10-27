@@ -46,9 +46,11 @@ namespace DADTKV.client
                 switch (command)
                 {
                     case TCommand:
+                        
                         TCommand tCommand = (TCommand)command;
                         DebugClass.Log(tCommand.ToString());
                         clientServer.SubmitTransaction(tCommand.GetReadSet(), tCommand.GetWriteSet());
+                        Thread.Sleep(1000);
                         break;
                     case SCommand:
                         SCommand sCommand = (SCommand)command;
@@ -61,14 +63,6 @@ namespace DADTKV.client
                         DebugClass.Log(wCommand.GetWaitTime().ToString());
                         Thread.Sleep(wCommand.GetWaitTime());
                         break;
-                }
-            }
-
-            if (Commands != null)
-            {
-                foreach (Command command in Commands)
-                {
-                    //command.Print();
                 }
             }
         }
