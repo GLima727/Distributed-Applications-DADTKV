@@ -102,14 +102,13 @@
 
                         if (!eventSet)
                         {
-                            transaction.status = -1;
-                            transaction.SignalClient.Set();
-
                             foreach (var t in TransactionQueue)
                             {
                                 t.status = -1;
                                 t.SignalClient.Set();
                             }
+
+                            return;
                         }
 
                         Monitor.Enter(_transactionManager.TMLock);
