@@ -102,7 +102,7 @@ namespace DADTKV.initializer
                         string[] suspicionLog = components;
                         int timeSlot = int.Parse(components[1]);
                         int roundsDownPart = 1;
-                        int numOfProc = -2;
+                        int numOfProc = -1;
                         foreach (string suspicion in suspicionLog)
                         {
                             if (roundsDownPart == 1 && suspicion[0] == 'C')

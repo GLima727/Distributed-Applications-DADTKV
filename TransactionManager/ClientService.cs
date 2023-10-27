@@ -28,7 +28,7 @@ namespace DADTKV.transactionManager
 
         public bool TmIsDown()
         {
-            return _transactionManager.RoundsDowns.Contains(_transactionManager.CurrentRound);
+            return _transactionManager.RoundsDowns.Contains(_transactionManager.CurrentRound + 1);
         }
 
         public ClientTransactionReply SubmitTransactionImpl(ClientTransactionRequest request)
@@ -103,7 +103,9 @@ namespace DADTKV.transactionManager
                     if (transaction.status == -1)
                     {
                         done = false;
-                    } else {
+                    }
+                    else
+                    {
                         done = true;
                         reply = transaction.TransactionReply;
                     }
@@ -137,6 +139,28 @@ namespace DADTKV.transactionManager
             }
 
             Task.WhenAll(tasks);
+        }
+
+        public override Task<ClientStatusReply> Status(ClientStatusRequest clientStatusRequest, ServerCallContext context)
+        {
+            return Task.FromResult(StatusImpl());
+        }
+
+        public ClientStatusReply StatusImpl()
+        {
+            ClientStatusReply clientStatusReply = new ClientStatusReply();
+            if (TmIsDown())
+            {
+                Console.WriteLine("Crashed");
+                clientStatusReply.Reply = false;
+            }
+            else
+            {
+                Console.WriteLine("Normal");
+                clientStatusReply.Reply = true;
+            }
+
+            return clientStatusReply;
         }
     }
 }

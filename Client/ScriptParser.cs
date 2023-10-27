@@ -61,6 +61,9 @@
 
                             commands.Add(command);
                             break;
+                        case 'S':
+                            commands.Add(new SCommand());
+                            break;
                         default:
                             break;
 

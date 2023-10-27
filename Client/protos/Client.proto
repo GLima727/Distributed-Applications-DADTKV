@@ -17,7 +17,7 @@ message ReceiveTransactionReply {}
 
 message ClientStatusRequest {}
 
-message ClientStatusReply {}
+message ClientStatusReply { bool repy = 1; }
 
 service ClientServerService {
   rpc SubmitTransaction(ClientTransactionRequest)
