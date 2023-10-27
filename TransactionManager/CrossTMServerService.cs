@@ -19,54 +19,71 @@ namespace DADTKV.transactionManager
 
         public URBroadCastReply URBroadCastImpl(URBroadCastRequest request)
         {
+            DebugClass.Log($"[URBroadCast Server] RECEIVING URBS FROM {request.Sender} ");
 
             //if the request is older than the tm or the tm is the one that created the request dont do anything
-            if (request.TimeStamp < _transactionManager.CurrentRound || request.Sender == _transactionManager.Id)
+            if ( request.Sender == _transactionManager.Id)
             {
+                DebugClass.Log($"[URBroadCast Server] RECEIVING URBS but the sender is the same as me {request.Sender}");
                 return new URBroadCastReply();
             }
             else
             {
-                DebugClass.Log("[URBroadCast Server]");
 
-                //se nao tiver recebido deste já
-                if (!_transactionManager.AcksReceived.Contains(request.Sender))
+                if (!_transactionManager.AcksReceived.ContainsKey(request.Sender))
                 {
-                    _transactionManager.AcksReceived.Add(request.Sender);
+                    _transactionManager.AcksReceived[request.Sender] = 0;
+                }
 
-                    if (_transactionManager.AcksReceived.Count < _transactionManager.TmsClients.Count / 2 + 1)
+
+                 _transactionManager.AcksReceived[request.Sender] += 1;
+
+                DebugClass.Log($"[URBroadCast Server] COUNT? {_transactionManager.AcksReceived[request.Sender]}");
+
+                if (_transactionManager.AcksReceived[request.Sender] == 1)
+                {
+                    DebugClass.Log($"[URBroadCast Server]FIRST TIME RECEIVING MEMORY OF {request.Sender}");
+
+                    //transmite para os outros apenas uma vez
+                    foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
+                        in _transactionManager.TmsClients)
                     {
-                        //update values in replica
-                        foreach (DADInt message in request.Message)
+
+                        DebugClass.Log($"[URBroadCast Server] IM GOING TO SEND TO {tm.Key}");
+
+                        //dont broadcast the message to the one that created it
+                        if (tm.Key == request.Sender || tm.Key == _transactionManager.Id)
                         {
-                            DebugClass.Log($"[URBroadCast Server] change memory to {message.Value} {message.Key}");
+                            DebugClass.Log($"[URBroadCast Server] IM NOT GOING TO SEND TO {tm.Key}");
 
-                            _transactionManager.DadInts[message.Key] = message.Value;
+                            continue;
                         }
-                    }
-                    if (_transactionManager.AcksReceived.Count == 1)
-                    {
-                        DebugClass.Log("[URBroadCast Server] Receiving DAdiNTs");
 
-                        //transmite para os outros apenas uma vez
-                        foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
-                            in _transactionManager.TmsClients)
-                        {
-                            //dont broadcast the message to the one that created it
-                            if (tm.Key == request.Sender)
-                            {
-                                continue;
-                            }
-                            URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
 
-                            urbroadcastRequest.Sender = request.Sender;
-                            urbroadcastRequest.Message.AddRange(request.Message);
-                            urbroadcastRequest.TimeStamp = _transactionManager.CurrentRound;
-                            tm.Value.Item1.URBroadCast(urbroadcastRequest);
-                        }
+                        URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
+
+                        urbroadcastRequest.Sender = request.Sender;
+                        urbroadcastRequest.Message.AddRange(request.Message);
+                        urbroadcastRequest.TimeStamp = _transactionManager.CurrentRound;
+                        tm.Value.Item1.URBroadCast(urbroadcastRequest);
                     }
                 }
+                if (_transactionManager.AcksReceived[request.Sender] >= _transactionManager.TmsClients.Count / 2)
+                {
+                    DebugClass.Log($"[URBroadCast Server]RECEIVED FROM MAJORITY MEMORY OF {request.Sender}");
+
+                    //update values in replica
+                    foreach (DADInt message in request.Message)
+                    {
+                        DebugClass.Log($"[URBroadCast Server] change memory to {message.Value} {message.Key} from {request.Sender}");
+
+                        _transactionManager.DadInts[message.Key] = message.Value;
+                    }
+                    //reinicia e já pode receber desse criador
+                    _transactionManager.AcksReceived[request.Sender] = 0;
+                }
             }
+            
 
             URBroadCastReply reply = new URBroadCastReply();
             return reply;

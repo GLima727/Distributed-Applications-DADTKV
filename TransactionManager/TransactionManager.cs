@@ -109,9 +109,9 @@ namespace DADTKV.transactionManager
             set { _tmsClients = value; }
         }
 
-        private List<string> _acksReceived = new List<string>();
+        private Dictionary<string, int> _acksReceived = new Dictionary<string, int>();
         private object _acksReceivedLock = new object();
-        public List<string> AcksReceived
+        public Dictionary<string, int> AcksReceived
         {
             get { lock (_acksReceivedLock) { return _acksReceived; } }
             set { lock (_acksReceivedLock) { _acksReceived = value; } }
@@ -251,12 +251,15 @@ namespace DADTKV.transactionManager
             foreach (KeyValuePair<string, Tuple<CrossServerTransactionManagerService.CrossServerTransactionManagerServiceClient, List<int>>> tm
                 in TmsClients)
             {
-                //if tmClient == alive?
+                if (tm.Key == Id)
+                {
+                    continue;
+                }
                 URBroadCastRequest urbroadcastRequest = new URBroadCastRequest();
 
                 foreach (DADInt m in message)
                 {
-                    DebugClass.Log($"[URBroadCast] DAdiNT {m}");
+                    DebugClass.Log($"[URBroadCast]Sending DAdiNT {m}");
                 }
 
                 urbroadcastRequest.Sender = Id;
@@ -297,6 +300,7 @@ namespace DADTKV.transactionManager
             if (request.WriteOperations.ToList().Count() != 0)
             {
                 // Propagate WriteOperations
+                DebugClass.Log2("About to start URBING");
                 URBroadCastMemory(request.WriteOperations.ToList());
             }
             return reply;
