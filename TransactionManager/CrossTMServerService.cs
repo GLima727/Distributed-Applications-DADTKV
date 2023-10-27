@@ -21,7 +21,7 @@ namespace DADTKV.transactionManager
         {
 
             //if the request is older than the tm or the tm is the one that created the request dont do anything
-            if (request.TimeStamp < _transactionManager.TimeSlot || request.Sender == _transactionManager.Id)
+            if (request.TimeStamp < _transactionManager.CurrentRound || request.Sender == _transactionManager.Id)
             {
                 return new URBroadCastReply();
             }
@@ -61,7 +61,7 @@ namespace DADTKV.transactionManager
 
                             urbroadcastRequest.Sender = request.Sender;
                             urbroadcastRequest.Message.AddRange(request.Message);
-                            urbroadcastRequest.TimeStamp = _transactionManager.TimeSlot;
+                            urbroadcastRequest.TimeStamp = _transactionManager.CurrentRound;
                             tm.Value.Item1.URBroadCast(urbroadcastRequest);
                         }
                     }
@@ -84,7 +84,7 @@ namespace DADTKV.transactionManager
             PropagateLeasesReply reply = new PropagateLeasesReply();
             foreach (var tm in _transactionManager.TmsClients)
             {
-                if (tm.Key == request.SenderId && tm.Value.Item2.Contains(_transactionManager.NRound))
+                if (tm.Key == request.SenderId && tm.Value.Item2.Contains(_transactionManager.CurrentRound))
                 {
                     Monitor.Exit(_transactionManager.CrossLock);
                     return reply;
@@ -141,7 +141,7 @@ namespace DADTKV.transactionManager
                 {
                     foreach (var tm in _transactionManager.TmsClients)
                     {
-                        if (!tm.Value.Item2.Contains(_transactionManager.TimeSlot))
+                        if (!tm.Value.Item2.Contains(_transactionManager.CurrentRound))
                         {
                             //if you dont suspect the tm at this timeslot you can ask for the leases
                             tm.Value.Item1.PropagateLeases(progRequest);
