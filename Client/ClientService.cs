@@ -17,17 +17,9 @@
         /// </summary>
         public ClientServerService.ClientServerServiceClient GetTransactionManager()
         {
-            Random rnd = new Random();
-            int number = rnd.Next(0, _client.TmsChannels.Count);
-            if (_client.Id == "client1")
-                return _client.TmsChannels[0];
-            else if (_client.Id == "client2")
-                return _client.TmsChannels[1];
-            else if (_client.Id == "client3")
-                return _client.TmsChannels[2];
-            else
-                return _client.TmsChannels[3];
-            //return _client.TmsChannels[0];
+            Random rnd = new Random(Guid.NewGuid().GetHashCode());
+            int number = rnd.Next(0, _client.TmsChannels.Count - 1);
+            return _client.TmsChannels[0];
         }
 
         /// <summary>
@@ -55,6 +47,23 @@
                 ClientTransactionReply reply = task.Result;
                 if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "ABORT" && reply.ObjValues[0].Value == -1)
                 {
+
+                    SubmitTransactions(tm, request).ContinueWith(task =>
+                    {
+                        ClientTransactionReply reply = task.Result;
+                        if (reply.ObjValues.Count == 1 && reply.ObjValues[0].Key == "ABORT" && reply.ObjValues[0].Value == -1)
+                        {
+
+                            DebugClass.Log("Transaction aborted.");
+                        }
+                        else
+                        {
+                            foreach (DADInt v in reply.ObjValues)
+                            {
+                                Console.WriteLine($"<{v.Key}, {v.Value}>");
+                            }
+                        }
+                    });
                     DebugClass.Log("Transaction aborted.");
                 }
                 else
@@ -64,7 +73,7 @@
                         Console.WriteLine($"<{v.Key}, {v.Value}>");
                     }
                 }
-            } );
+            });
         }
 
         static async Task<ClientTransactionReply> SubmitTransactions(ClientServerService.ClientServerServiceClient client, ClientTransactionRequest request)
